@@ -1,10 +1,14 @@
 namespace GitLite;
 
+/// <summary>
+/// Class representing GitLite repository.
+/// </summary>
 public class Repository
 {
     
     private static DirectoryInfo CWD = Directory.GetParent(AppContext.BaseDirectory);
     private static DirectoryInfo GITLITE_DIR = Utils.JoinDirectory(CWD, ".gitlite");
+    
     /// <summary>
     /// This initializes the GitLite repository on the Current Working Directory.
     /// </summary>

@@ -2,6 +2,9 @@
 
 namespace GitLite;
 
+/// <summary>
+/// Class that runs GitLite.
+/// </summary>
 public static class Program
 {
     public static void Main(string[] args)
