@@ -1,6 +1,6 @@
 #!/bin/bash
 
-tests=("../testInit.sh")
+tests=("../test_init.sh")
 
 echo "Running GitLite tests..."
 echo
@@ -8,7 +8,13 @@ echo
 # building the project
 cd ../
 dotnet publish -c Release -r linux-x64 --self-contained -p:PublishSingleFile=true
+if [[ ! $? -eq 0 ]]; then
+  echo "Building failed."
+  exit 1
+fi 
+
 echo
+clear
 
 cd ./tests
 
@@ -29,9 +35,10 @@ failed=0
 
 for test in "${tests[@]}"; do
   ./$test
+  test_exit_code=$?
   echo
-  echo
-  if [[ $? -eq 0 ]]; then
+  
+  if [[ $test_exit_code -eq 0 ]]; then
     echo "$test passed"
     ((passed++))
   else
