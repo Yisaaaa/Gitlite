@@ -26,10 +26,10 @@ public class Commit
         this.timestamp = timestamp;
     }
 
-    private static string GetHash(Commit commit)
+    public static string GetHash(Commit commit)
     {
         byte[] bytes = MessagePackSerializer.Serialize(commit);
-        return Convert.ToHexString(SHA1.HashData(bytes));
+        return Convert.ToHexString(SHA1.HashData(bytes)).ToLower();
     }
     
     /// <summary>

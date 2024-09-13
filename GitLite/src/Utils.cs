@@ -3,6 +3,20 @@ namespace GitLite;
 public class Utils
 {
     
+    /* READING & WRITING */
+    /// <summary>
+    /// Writes a single string content to a file.
+    /// </summary>
+    /// <param name="file">File name</param>
+    /// <param name="content">Content to write into the file</param>
+    public static void WriteContent(string file, string content)
+    {
+        using (StreamWriter sw = new StreamWriter(file))
+        {
+            sw.Write(content);
+        }
+    }
+    
     
     /* FILE & DIR UTILS*/
   
