@@ -1,45 +1,47 @@
+using System.Security.Cryptography;
+using MessagePack;
+    
 namespace GitLite;
 
 /// <summary>
 /// Class that represents GitLite commits.
 /// </summary>
+[MessagePackObject]
 public class Commit
 {
-    public string hashName;
+    [Key(0)]
     public string logMessage;
+    [Key(1)]
     public DateTime timestamp;
-    public string parentHashRef;
-    public string? secondParentHashRef;
 
 
     /// <summary>
     /// Initializes a new Commit object.
     /// </summary>
-    /// <param name="hashName"></param>
     /// <param name="logMessage"></param>
     /// <param name="timestamp"></param>
-    /// <param name="parentHashRef"></param>
-    /// <param name="secondParentHashRef"></param>
-    public Commit(string hashName, string logMessage, DateTime timestamp, string parentHashRef,
-        string? secondParentHashRef)
+    public Commit(string logMessage, DateTime timestamp)
     {
-        this.hashName = hashName;
         this.logMessage = logMessage;
         this.timestamp = timestamp;
-        this.parentHashRef = parentHashRef;
-        this.secondParentHashRef = secondParentHashRef;
     }
 
+    private static string GetHash(Commit commit)
+    {
+        byte[] bytes = MessagePackSerializer.Serialize(commit);
+        return Convert.ToHexString(SHA1.HashData(bytes));
+    }
+    
     /// <summary>
     /// Creates a new Commit object and returns it.
     /// </summary>
     /// <param name="logMessage"></param>
-    /// <param name="parentHashRef"></param>
-    /// <param name="secondParentHashRef"></param>
-    /// <returns></returns>
-    public static Commit CreateCommit(string logMessage, string parentHashRef, string? secondParentHashRef)
+    /// <returns>A Commit object.</returns>
+    public static Commit CreateCommit(string logMessage)
     {
-        throw new NotImplementedException();
+        DateTime timeCreated = DateTime.Now;
+        return new Commit(logMessage, timeCreated);
+        
     }
     
 }

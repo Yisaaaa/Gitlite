@@ -13,7 +13,7 @@ public static class Program
         {
             Utils.ExitWithError("Must have at least one argument");   
         }
-
+        
         switch (args[0])
         {   
             case "init":
