@@ -8,7 +8,7 @@ namespace GitLite;
     
     private static DirectoryInfo CWD = Directory.GetParent(AppContext.BaseDirectory);
     private static DirectoryInfo GITLITE_DIR = Utils.JoinDirectory(CWD, ".gitlite");
-    private static DirectoryInfo COMMITS_DIR = Utils.JoinDirectory(GITLITE_DIR, "commits");
+    public static DirectoryInfo COMMITS_DIR = Utils.JoinDirectory(GITLITE_DIR, "commits");
     private static DirectoryInfo BLOBS_DIR = Utils.JoinDirectory(GITLITE_DIR, "blobs");
     private static DirectoryInfo BRANCHES = Utils.JoinDirectory(GITLITE_DIR, "branches");
     
@@ -23,10 +23,10 @@ namespace GitLite;
             Utils.ExitWithError("A Gitlet version-control system already exists in the current directory.");
         }
         
-        // Creates the directory structures inside .gitlite
+        // Creates the directory structure inside .gitlite
         CreateDirs();
         
-        string hash = CreateCommit("initial commit");
+        string hash = Commit.CreateInitialCommit();
         CreateBranch("master", hash);
         Utils.WriteContent(Path.Combine(GITLITE_DIR.ToString(), "HEAD"), hash);
         
@@ -53,19 +53,6 @@ namespace GitLite;
         COMMITS_DIR.Create();
         BLOBS_DIR.Create();
         BRANCHES.Create();
-    }
-
-    /// <summary>
-    /// Creates a Commit object with LOG MESSAGE and returns its hash.
-    /// </summary>
-    /// <param name="logMessage">Commit log message</param>
-    /// <returns>Hash string of the created Commit object.</returns>
-    private static string CreateCommit(string logMessage)
-    {
-        Commit initialCommit = Commit.CreateCommit(logMessage);
-        string hash = Commit.GetHash(initialCommit);
-        File.Create(Path.Combine(COMMITS_DIR.ToString(), hash));
-        return hash;
     }
 
     /// <summary>

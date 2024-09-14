@@ -33,15 +33,28 @@ public class Commit
     }
     
     /// <summary>
-    /// Creates a new Commit object and returns it.
+    /// Creates a Commit object with LOG MESSAGE and returns its hash.
     /// </summary>
-    /// <param name="logMessage"></param>
-    /// <returns>A Commit object.</returns>
-    public static Commit CreateCommit(string logMessage)
+    /// <param name="logMessage">Commit log message</param>
+    /// <param name="timestamp">Timestamp of when the commit was created.</param>
+    /// <returns>Hash string of the created Commit object.</returns>
+    private static string CreateCommit(string logMessage, DateTime timestamp)
     {
-        DateTime timeCreated = DateTime.Now;
-        return new Commit(logMessage, timeCreated);
-        
+        Commit commit = new Commit(logMessage, timestamp);
+        string hash = GetHash(commit);
+        File.Create(Path.Combine(Repository.COMMITS_DIR.ToString(), hash));
+        return hash;
     }
-    
+
+    public static string CreateCommit(string logMessage)
+    {
+        DateTime timestamp = DateTime.Now;
+        return CreateCommit(logMessage, timestamp);
+    }
+
+    public static string CreateInitialCommit()
+    {
+        DateTime unixEpoch = DateTime.UnixEpoch;
+        return CreateCommit("initial commit", unixEpoch);
+    }
 }
