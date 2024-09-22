@@ -16,7 +16,21 @@ public class Utils
             sw.Write(content);
         }
     }
-    
+
+    /// <summary>
+    /// Writes byte array content to a file.
+    /// </summary>
+    /// <param name="file">File name</param>
+    /// <param name="content">Content in to write represented in byte array into the file</param>
+    public static void WriteContent(string file, byte[] content)
+    {
+        File.WriteAllBytes(file, content);
+    }
+
+    public static byte[] ReadContentsAsBytes(string file)
+    {
+        return File.ReadAllBytes(file);
+    }
     
     /* FILE & DIR UTILS*/
   

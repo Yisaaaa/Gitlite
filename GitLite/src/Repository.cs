@@ -1,3 +1,5 @@
+using MessagePack;
+
 namespace GitLite;
 
 /// <summary>
@@ -7,7 +9,7 @@ namespace GitLite;
 {
     
     private static DirectoryInfo CWD = Directory.GetParent(AppContext.BaseDirectory);
-    private static DirectoryInfo GITLITE_DIR = Utils.JoinDirectory(CWD, ".gitlite");
+    public static DirectoryInfo GITLITE_DIR = Utils.JoinDirectory(CWD, ".gitlite");
     public static DirectoryInfo COMMITS_DIR = Utils.JoinDirectory(GITLITE_DIR, "commits");
     private static DirectoryInfo BLOBS_DIR = Utils.JoinDirectory(GITLITE_DIR, "blobs");
     private static DirectoryInfo BRANCHES = Utils.JoinDirectory(GITLITE_DIR, "branches");
@@ -32,6 +34,36 @@ namespace GitLite;
         
         Console.WriteLine($"Initialized a new GitLite at {CWD.ToString()}");
     }
+    public static void Add(string fileName)
+    {
+        if (!File.Exists(fileName))
+        {
+            Utils.ExitWithError("File does not exist.");
+        }
+
+        StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
+        Dictionary<string, byte[]> forAddition = stagingArea.GetStagingForAddition();
+
+        using (FileStream file = File.Open(fileName, FileMode.Open))
+        {
+            byte[] serializedFile = MessagePackSerializer.Serialize(file);
+            
+            if (!forAddition.ContainsKey(fileName))
+            {
+                forAddition.Add(fileName, serializedFile);
+            }
+
+            byte[] sameFileFromStagingArea = forAddition[fileName];
+
+            if (!serializedFile.Equals(sameFileFromStagingArea))
+            {
+                forAddition[fileName] = serializedFile;
+            }
+        }
+
+        byte[] reserializedStagingArea = MessagePackSerializer.Serialize(stagingArea);
+        Utils.WriteContent(StagingArea.STAGING_AREA, reserializedStagingArea);
+    }
 
     /// <summary>
     /// Creates a GitLite branch.
@@ -45,7 +77,7 @@ namespace GitLite;
     }
 
     /// <summary>
-    /// Creates the directory structures inside of .gitlite directory
+    /// Creates the directory structures inside the .gitlite directory
     /// </summary>
     private static void CreateDirs()
     {
@@ -53,14 +85,16 @@ namespace GitLite;
         COMMITS_DIR.Create();
         BLOBS_DIR.Create();
         BRANCHES.Create();
+        StagingArea.CreateStagingArea();
     }
 
     /// <summary>
     /// Checks if GitLite has already been initialized.
     /// </summary>
     /// <returns>true if already initialized otherwise false</returns>
-    private static bool GitliteAlreadyInitialized()
+    public static bool GitliteAlreadyInitialized()
     {
         return GITLITE_DIR.Exists;
     }
+    
 }

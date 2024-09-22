@@ -5,23 +5,26 @@ namespace GitLite;
 [MessagePackObject]
 public partial class StagingArea
 {
+
+    public static string STAGING_AREA = Path.Combine(Repository.GITLITE_DIR.ToString(), "staging");
+
     [Key(0)]
-    private Dictionary<string, string> stagingForAddition;
+    private Dictionary<string, byte[]> stagingForAddition;
     [Key(1)]
-    private Dictionary<string, string> stagingForRemoval;
+    private Dictionary<string, byte[]> stagingForRemoval;
 
     public StagingArea()
     {
-        stagingForAddition = new Dictionary<string, string>();
-        stagingForRemoval = new Dictionary<string, string>();
+        stagingForAddition = new Dictionary<string, byte[]>();
+        stagingForRemoval = new Dictionary<string, byte[]>();
     }
 
-    public Dictionary<string, string> GetStagingForAddition()
+    public Dictionary<string, byte[]> GetStagingForAddition()
     {
         return stagingForAddition;
     }
 
-    public Dictionary<string, string> GetStagingForRemoval()
+    public Dictionary<string, byte[]> GetStagingForRemoval()
     {
         return stagingForRemoval;
     }
@@ -36,12 +39,18 @@ public partial class StagingArea
         return MessagePackSerializer.Deserialize<StagingArea>(serializedStagingArea);
     }
 
+    public static StagingArea GetDeserializedStagingArea()
+    {
+        byte[] serializedObj = Utils.ReadContentsAsBytes(STAGING_AREA);
+        return Deserialize(serializedObj);
+    }
+
     /// <summary>
     /// Creates the staging area under .gitlite directory if it does not exist.
     /// </summary>
     public static void CreateStagingArea()
     {
-        FileInfo staging = new FileInfo(Path.Combine(Repository.GITLITE_DIR.ToString(), "staging"));
+        FileInfo staging = new FileInfo(STAGING_AREA);
 
         if (!staging.Exists)
         {
@@ -50,4 +59,6 @@ public partial class StagingArea
             Utils.WriteContent(staging.ToString(), serialized);
         }
     }
+    
+    
 }
