@@ -11,17 +11,25 @@ public static class Program
     {
         if (args.Length == 0)
         {
-            Utils.ExitWithError("Must have at least one argument");   
+            Utils.ExitWithError("Please enter a command.");   
         }
-        
+
+        if (args[0] == "init")
+        {
+            Utils.ValidateArguments("init", args, 1);
+            Repository.Init();
+            return;
+        }
+
+        if (!Repository.GitliteAlreadyInitialized())
+        {
+            Utils.ExitWithError("Not in an initialized GitLite directory.");
+        }
+            
         switch (args[0])
         {   
-            case "init":
-                Utils.ValidateArguments("init", args, 1);
-                Repository.Init();
-                break;
             default:
-                Utils.ExitWithError($"Unknown command: {args[0]}");
+                Utils.ExitWithError($"No command with such name exists: {args[0]}");
                 break;
         }
     }
