@@ -27,7 +27,11 @@ public static class Program
         }
             
         switch (args[0])
-        {   
+        {
+            case "add":
+                Utils.ValidateArguments("add", args, 2);
+                Repository.Add(args[1]);
+                break;
             default:
                 Utils.ExitWithError($"No command with such name exists: {args[0]}");
                 break;

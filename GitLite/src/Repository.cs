@@ -46,18 +46,20 @@ namespace GitLite;
 
         using (FileStream file = File.Open(fileName, FileMode.Open))
         {
-            byte[] serializedFile = MessagePackSerializer.Serialize(file);
+            byte[] serializedFile = MessagePackSerializer.Serialize(file.ReadByte());
             
             if (!forAddition.ContainsKey(fileName))
             {
                 forAddition.Add(fileName, serializedFile);
+                Console.WriteLine("Not yet staged");
             }
 
             byte[] sameFileFromStagingArea = forAddition[fileName];
 
-            if (!serializedFile.Equals(sameFileFromStagingArea))
+            if (!serializedFile.SequenceEqual(sameFileFromStagingArea))
             {
                 forAddition[fileName] = serializedFile;
+                Console.WriteLine("Different file");
             }
         }
 
