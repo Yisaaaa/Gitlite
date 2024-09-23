@@ -42,7 +42,9 @@ public class Commit
     {
         Commit commit = new Commit(logMessage, timestamp);
         string hash = GetHash(commit);
-        File.Create(Path.Combine(Repository.COMMITS_DIR.ToString(), hash));
+        // File.CreateText(Path.Combine(Repository.COMMITS_DIR.ToString(), hash));
+        byte[] serializedCommit = MessagePackSerializer.Serialize(commit);
+        Utils.WriteContent(Path.Combine(Repository.COMMITS_DIR.ToString(), hash), serializedCommit);
         return hash;
     }
 
