@@ -9,10 +9,9 @@ namespace GitLite;
 [MessagePackObject]
 public class Commit
 {
-    [Key(0)]
-    public string logMessage;
-    [Key(1)]
-    public DateTime timestamp;
+    [Key(0)] public string LogMessage { get; set; }
+
+    [Key(1)] public DateTime Timestamp { get; set; }
 
 
     /// <summary>
@@ -22,8 +21,8 @@ public class Commit
     /// <param name="timestamp"></param>
     public Commit(string logMessage, DateTime timestamp)
     {
-        this.logMessage = logMessage;
-        this.timestamp = timestamp;
+        this.LogMessage = logMessage;
+        this.Timestamp = timestamp;
     }
 
     public static string GetHash(Commit commit)
@@ -47,6 +46,11 @@ public class Commit
         Utils.WriteContent(Path.Combine(Repository.COMMITS_DIR.ToString(), hash), serializedCommit);
         return hash;
     }
+    
+    public override string ToString()
+    {
+        return $"LogMessage: {LogMessage}, Timestamp: {Timestamp}";
+    }
 
     public static string CreateCommit(string logMessage)
     {
@@ -58,5 +62,11 @@ public class Commit
     {
         DateTime unixEpoch = DateTime.UnixEpoch;
         return CreateCommit("initial commit", unixEpoch);
+    }
+
+    public static Commit Deserialize(string fileName)
+    {
+        byte[] byteValue = Utils.ReadContentsAsBytes(fileName);
+        return MessagePackSerializer.Deserialize<Commit>(byteValue);
     }
 }

@@ -44,23 +44,40 @@ namespace GitLite;
         StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
         Dictionary<string, byte[]> forAddition = stagingArea.GetStagingForAddition();
 
-        using (FileStream file = File.Open(fileName, FileMode.Open))
+        // using (FileStream file = File.Open(fileName, FileMode.Open))
+        // {
+        //     // Serializing is kind of useless i Guess
+        //     // byte[] serializedFile = MessagePackSerializer.Serialize(file.ReadByte());
+        //     
+        //     if (!forAddition.ContainsKey(fileName))
+        //     {
+        //         forAddition.Add(fileName, File.ReadAllBytes(fileName));
+        //         Console.WriteLine("Not yet staged");
+        //     }
+        //
+        //     byte[] sameFileFromStagingArea = forAddition[fileName];
+        //
+        //     if (!serializedFile.SequenceEqual(sameFileFromStagingArea))
+        //     {
+        //         forAddition[fileName] = serializedFile;
+        //         Console.WriteLine("Different file");
+        //     }
+        // }
+
+        byte[] fileInByte = File.ReadAllBytes(fileName);
+        
+        if (!forAddition.ContainsKey(fileName))
         {
-            byte[] serializedFile = MessagePackSerializer.Serialize(file.ReadByte());
-            
-            if (!forAddition.ContainsKey(fileName))
-            {
-                forAddition.Add(fileName, serializedFile);
-                Console.WriteLine("Not yet staged");
-            }
-
-            byte[] sameFileFromStagingArea = forAddition[fileName];
-
-            if (!serializedFile.SequenceEqual(sameFileFromStagingArea))
-            {
-                forAddition[fileName] = serializedFile;
-                Console.WriteLine("Different file");
-            }
+            forAddition.Add(fileName, File.ReadAllBytes(fileName));
+            Console.WriteLine("Not yet staged");
+        }
+        
+        byte[] sameFileFromStagingArea = forAddition[fileName];
+        
+        if (!fileInByte.SequenceEqual(sameFileFromStagingArea))
+        {
+            forAddition[fileName] = fileInByte;
+            Console.WriteLine("Different file");
         }
 
         byte[] reserializedStagingArea = MessagePackSerializer.Serialize(stagingArea);

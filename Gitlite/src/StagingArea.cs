@@ -9,9 +9,9 @@ public partial class StagingArea
     public static string STAGING_AREA = Path.Combine(Repository.GITLITE_DIR.ToString(), "staging");
 
     [Key(0)]
-    private Dictionary<string, byte[]> stagingForAddition;
+    private Dictionary<string, byte[]> stagingForAddition { get; set; }
     [Key(1)]
-    private Dictionary<string, byte[]> stagingForRemoval;
+    private Dictionary<string, byte[]> stagingForRemoval { get; set; }
 
     public StagingArea()
     {
@@ -57,6 +57,25 @@ public partial class StagingArea
             StagingArea stagingAreaObject = new StagingArea();
             byte[] serialized = MessagePackSerializer.Serialize(stagingAreaObject);
             Utils.WriteContent(staging.ToString(), serialized);
+        }
+    }
+
+    public void StringValue()
+    {
+        Console.WriteLine("For addition");
+        foreach (var keyValuePair in stagingForAddition)
+        {
+            Console.WriteLine(keyValuePair.Key);
+            Console.WriteLine(System.Text.Encoding.UTF8.GetString(keyValuePair.Value));
+            Console.WriteLine("");
+        }
+
+        Console.WriteLine("For removal");
+        foreach (var keyValuePair in stagingForRemoval)
+        {
+            Console.WriteLine(keyValuePair.Key);
+            Console.WriteLine(System.Text.Encoding.UTF8.GetString(keyValuePair.Value));
+            Console.WriteLine("");
         }
     }
     

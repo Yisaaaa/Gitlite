@@ -32,6 +32,12 @@ public static class Program
                 Utils.ValidateArguments("add", args, 2);
                 Repository.Add(args[1]);
                 break;
+            
+            case "read":
+                Utils.ValidateArguments("read", args, 3);
+                Reader.Read(args[1], args[2]);
+                break;
+                
             default:
                 Utils.ExitWithError($"No command with such name exists: {args[0]}");
                 break;
