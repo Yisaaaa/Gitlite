@@ -5,7 +5,7 @@ namespace GitLite;
 
 public class Reader
 {
-    public static string? Read(string fileName, string objectType)
+    public static void Read(string fileName, string objectType)
     {
         switch (objectType)
         {
@@ -28,7 +28,5 @@ public class Reader
                 Utils.ExitWithError($"No object with name: {objectType}");
                 break;
         }
-
-        return null;
     }
 }
