@@ -8,8 +8,15 @@ public partial class StagingArea
 
     public static string STAGING_AREA = Path.Combine(Repository.GITLITE_DIR.ToString(), "staging");
 
+    /// <summary>
+    /// Mapping of files for addition.
+    /// </summary>
     [Key(0)]
     private Dictionary<string, byte[]> stagingForAddition { get; set; }
+    
+    /// <summary>
+    /// Mapping of files for addition.
+    /// </summary>
     [Key(1)]
     private Dictionary<string, byte[]> stagingForRemoval { get; set; }
 
@@ -19,11 +26,19 @@ public partial class StagingArea
         stagingForRemoval = new Dictionary<string, byte[]>();
     }
 
+    /// <summary>
+    /// Returns the mapping of files for addition.
+    /// </summary>
+    /// <returns>A Dictionary with (string, byte[]) pair</returns>
     public Dictionary<string, byte[]> GetStagingForAddition()
     {
         return stagingForAddition;
     }
 
+    /// <summary>
+    /// Returns the mapping of files for removal.
+    /// </summary>
+    /// <returns>A Dictionary with (string, byte[]) pair</returns>
     public Dictionary<string, byte[]> GetStagingForRemoval()
     {
         return stagingForRemoval;
@@ -39,6 +54,10 @@ public partial class StagingArea
         return MessagePackSerializer.Deserialize<StagingArea>(serializedStagingArea);
     }
 
+    /// <summary>
+    /// Returns the deserialized staging area.
+    /// </summary>
+    /// <returns>A StagingArea object</returns>
     public static StagingArea GetDeserializedStagingArea()
     {
         byte[] serializedObj = Utils.ReadContentsAsBytes(STAGING_AREA);
@@ -60,9 +79,12 @@ public partial class StagingArea
         }
     }
 
+    /// <summary>
+    /// Prints out the string representation of the staging area.
+    /// </summary>
     public void StringValue()
     {
-        Console.WriteLine("For addition");
+        Console.WriteLine("For addition:");
         foreach (var keyValuePair in stagingForAddition)
         {
             Console.WriteLine(keyValuePair.Key);
@@ -70,7 +92,7 @@ public partial class StagingArea
             Console.WriteLine("");
         }
 
-        Console.WriteLine("For removal");
+        Console.WriteLine("For removal:");
         foreach (var keyValuePair in stagingForRemoval)
         {
             Console.WriteLine(keyValuePair.Key);
