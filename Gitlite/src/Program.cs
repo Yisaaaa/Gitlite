@@ -1,6 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-namespace GitLite;
+namespace Gitlite;
 
 /// <summary>
 /// Class that runs GitLite.

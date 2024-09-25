@@ -1,7 +1,7 @@
 using System.Text.Json;
 using MessagePack;
 
-namespace GitLite;
+namespace Gitlite;
 
 public class Reader
 {

@@ -1,4 +1,6 @@
-namespace GitLite;
+using System.Security.Cryptography;
+
+namespace Gitlite;
 
 public class Utils
 {
@@ -30,6 +32,11 @@ public class Utils
     public static byte[] ReadContentsAsBytes(string file)
     {
         return File.ReadAllBytes(file);
+    }
+
+    public static string ReadContentsAsString(string file)
+    {
+        return File.ReadAllText(file);
     }
     
     /* FILE & DIR UTILS*/
@@ -88,5 +95,12 @@ public class Utils
         {
             throw new ArgumentException($"Invalid number of arguments for: {cmd}");
         }
+    }
+    
+    
+    /* HASHING */
+    public static string HashBytes(byte[] bytes)
+    {
+        return Convert.ToHexString(SHA1.HashData(bytes)).ToLower();
     }
 }

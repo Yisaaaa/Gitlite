@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using MessagePack;
     
-namespace GitLite;
+namespace Gitlite;
 
 /// <summary>
 /// Class that represents GitLite commits.
@@ -12,6 +12,8 @@ public class Commit
     [Key(0)] public string LogMessage { get; set; }
 
     [Key(1)] public DateTime Timestamp { get; set; }
+    
+    [Key(2)] public Dictionary<string, string> FileMapping { get; set; }
 
 
     /// <summary>
@@ -23,12 +25,13 @@ public class Commit
     {
         this.LogMessage = logMessage;
         this.Timestamp = timestamp;
+        this.FileMapping = new Dictionary<string, string>();
     }
 
     public static string GetHash(Commit commit)
     {
         byte[] bytes = MessagePackSerializer.Serialize(commit);
-        return Convert.ToHexString(SHA1.HashData(bytes)).ToLower();
+        return Utils.HashBytes(bytes);
     }
     
     /// <summary>
@@ -68,5 +71,14 @@ public class Commit
     {
         byte[] byteValue = Utils.ReadContentsAsBytes(fileName);
         return MessagePackSerializer.Deserialize<Commit>(byteValue);
+    }
+
+    public static Commit GetHeadCommit()
+    {
+        string hashRef = Utils.ReadContentsAsString(Path.Combine(Repository.GITLITE_DIR.ToString(), "HEAD"));
+        Console.WriteLine(hashRef);
+        Commit commit = Deserialize(Path.Combine(Repository.COMMITS_DIR.ToString(), hashRef));
+
+        return commit;
     }
 }

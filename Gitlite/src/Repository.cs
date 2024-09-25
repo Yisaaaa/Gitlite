@@ -1,6 +1,6 @@
 using MessagePack;
 
-namespace GitLite;
+namespace Gitlite;
 
 /// <summary>
 /// Class representing a GitLite repository.
@@ -13,6 +13,9 @@ namespace GitLite;
     public static DirectoryInfo COMMITS_DIR = Utils.JoinDirectory(GITLITE_DIR, "commits");
     private static DirectoryInfo BLOBS_DIR = Utils.JoinDirectory(GITLITE_DIR, "blobs");
     private static DirectoryInfo BRANCHES = Utils.JoinDirectory(GITLITE_DIR, "branches");
+    
+    
+    /* GITLITE MAIN COMMANDS */
     
     /// <summary>
     /// This initializes the GitLite repository on the Current Working Directory.
@@ -28,7 +31,7 @@ namespace GitLite;
         // Creates the directory structure inside .gitlite
         CreateDirs();
         
-        string hash = Commit.CreateInitialCommit();
+        string hash = Gitlite.Commit.CreateInitialCommit();
         CreateBranch("master", hash);
         Utils.WriteContent(Path.Combine(GITLITE_DIR.ToString(), "HEAD"), hash);
         
@@ -84,6 +87,70 @@ namespace GitLite;
         Utils.WriteContent(StagingArea.STAGING_AREA, reserializedStagingArea);
     }
 
+    public static void Commit(string logMessage)
+    {
+        /* Steps:
+         * 1. Clone the current commit. This will be the new commit's
+         *    parent.
+         * 2. Save the new files from staging area as blobs
+         * 3. Update blobs of the updated files on staging area for addition.
+         * 4. Clear the staging area.
+         * 5. Update the pointers. HEAD and branch pointer.
+         * 6. Save the commit using its SHA-1 as name.
+         */
+        
+        // Get staging area
+        StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
+
+        // Check for failure cases
+        if (!stagingArea.IsThereStagedFiles())
+        {
+            Utils.ExitWithError("No changes added to the commit.");
+        } else if (logMessage == "")
+        {
+            Utils.ExitWithError("Please provide a commit message.");
+        }
+        
+        Dictionary<string, byte[]> forAddition = stagingArea.GetStagingForAddition();
+        Dictionary<string, byte[]> forRemoval = stagingArea.GetStagingForRemoval();
+        Commit commitOnHEAD = Gitlite.Commit.GetHeadCommit();
+        commitOnHEAD.LogMessage = logMessage;
+        commitOnHEAD.Timestamp = DateTime.Now;
+        Dictionary<string, string> fileMapping = commitOnHEAD.FileMapping;
+
+        // Invariant: COMMIT.FileMapping contains the mapping of file names to blobs.
+        
+        foreach (var keyValuePair in forAddition)
+        {
+            // If file in addition is not yet being tracked.
+            if (!fileMapping.ContainsKey(keyValuePair.Key))
+            {
+                // Save the contents of file as blob
+                byte[] bytes = keyValuePair.Value;
+                string hash = Utils.HashBytes(bytes);
+                Utils.WriteContent(Path.Combine(BLOBS_DIR.ToString(), hash), bytes);
+                
+                // Finally add the mapping to commit
+                fileMapping.Add(keyValuePair.Key, hash);
+                
+            } else if (fileMapping.ContainsKey(keyValuePair.Key))
+            {
+                /* Update the blob */
+                // Get the bytes of (updated) file in CWD
+                byte[] bytes = keyValuePair.Value;
+                string hash = Utils.HashBytes(bytes);
+                Utils.WriteContent(Path.Combine(BLOBS_DIR.ToString(), hash), bytes);
+                
+                // Update the file mapping of commit
+                fileMapping[keyValuePair.Key] = hash;
+            }
+        }
+        
+        // For removal, todo later.
+        // code...
+    }
+
+    
     /// <summary>
     /// Creates a GitLite branch.
     /// </summary>

@@ -1,6 +1,6 @@
 using MessagePack;
 
-namespace GitLite;
+namespace Gitlite;
 
 [MessagePackObject]
 public partial class StagingArea
@@ -9,7 +9,7 @@ public partial class StagingArea
     public static string STAGING_AREA = Path.Combine(Repository.GITLITE_DIR.ToString(), "staging");
 
     /// <summary>
-    /// Mapping of files for addition.
+    /// Mapping of files for addition. (fileName, contents in byte[])
     /// </summary>
     [Key(0)]
     private Dictionary<string, byte[]> stagingForAddition { get; set; }
@@ -100,6 +100,10 @@ public partial class StagingArea
             Console.WriteLine("");
         }
     }
-    
+
+    public bool IsThereStagedFiles()
+    {
+        return stagingForAddition.Count != 0 || stagingForRemoval.Count != 0;
+    }
     
 }
