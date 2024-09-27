@@ -1,12 +1,14 @@
 import os
 import subprocess
 import shutil
+from math import isinf
 
 test_dir = "test_tmp_dir"
 
-def setup():
+def setup(init=True):
     """
-    Sets up the directory for testing 
+    Sets up the directory for testing.
+    :param init: if True, also do "Gitlite init"
     """
     os.chdir("tests")
     
@@ -17,13 +19,21 @@ def setup():
     os.chdir(test_dir)
     subprocess.run(["cp", "../Gitlite", "./"])
     
+    if init:
+        run_gitlite_cmd("init")
+        
+
 def run_gitlite_cmd(cmd):   
     """
     Given a CMD argument, runs the Gitlite command corresponding to it.
-    :param cmd: Command to run on Gitlite 
+    :param cmd: (str or a list of str) Command to run on Gitlite
     :return: stdout (output), return_code 
     """
-    result = subprocess.run(["./Gitlite"] + cmd.split(), capture_output=True, text=True)
+    if isinstance(cmd, str):
+        result = subprocess.run(["./Gitlite"] + cmd.split(), capture_output=True, text=True)
+    else:
+        result = subprocess.run(["./Gitlite"] + cmd, capture_output=True, text=True)
+        
     return result.stdout.strip(), result.returncode
 
 def clean_up():

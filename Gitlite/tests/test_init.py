@@ -6,7 +6,7 @@ def test_init_on_fresh_dir():
     Tests init on a fresh, uninitialized
     directory. 
     """
-    utils.setup()
+    utils.setup(init=False)
 
     stdout, return_code = utils.run_gitlite_cmd("init")
     assert return_code == 0
@@ -30,7 +30,7 @@ def test_init_on_initialized_dir():
     Tests init command on an already initialized
     Gitlite repository
     """
-    utils.setup()
+    utils.setup(init=False)
     utils.run_gitlite_cmd("init")
     
     stdout, return_code = utils.run_gitlite_cmd("init")
