@@ -10,8 +10,12 @@ def test_add_single_file():
     utils.run_gitlite_cmd("init")
     subprocess.run(["touch", "hello.txt", "'Hello' >> hello.txt"])
     stdout, return_code = utils.run_gitlite_cmd("add hello.txt")
-    
     assert return_code == 0
+    
+    stdout, return_code = utils.run_gitlite_cmd("read staging staging")
+    assert return_code == 0
+    print(stdout)
+    assert "hello.txt" in stdout
     
     utils.clean_up()
     
