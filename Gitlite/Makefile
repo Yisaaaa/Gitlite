@@ -4,7 +4,7 @@ BUILD = /home/luis/RiderProjects/Gitlite/Gitlite/bin/Release/net6.0/linux-x64/pu
 # Testing directory
 TESTDIR = ./tests 
 
-all: build test clean
+all: clean build test clean
 
 build: $(shell find src -type f)
 	echo "Building Gitlite on ${TESTDIR}"
@@ -13,7 +13,7 @@ build: $(shell find src -type f)
 	
 manual_test: build
 	cd ${TESTDIR} && \
-	mkdir test_temp_dir && \
+	mkdir test_tmp_dir && \
 	cp Gitlite test_temp_dir
 	
 test: build
