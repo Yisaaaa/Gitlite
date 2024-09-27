@@ -11,6 +11,11 @@ build: $(shell find src -type f)
 	dotnet publish -c Release -r linux-x64 --self-contained -p:PublishSingleFile=true -o ${TESTDIR}
 	cd ${TESTDIR} && rm Gitlite.pdb
 	
+manual_test: build
+	cd ${TESTDIR} && \
+	mkdir test_temp_dir && \
+	cp Gitlite test_temp_dir
+	
 test: build
 	venv/bin/pytest -s -v
 	
