@@ -4,13 +4,16 @@ BUILD = /home/luis/RiderProjects/Gitlite/Gitlite/bin/Release/net6.0/linux-x64/pu
 # Testing directory
 TESTDIR = ./tests 
 
-all: build clean
+all: build test clean
 
 build: $(shell find src -type f)
 	echo "Building Gitlite on ${TESTDIR}"
 	dotnet publish -c Release -r linux-x64 --self-contained -p:PublishSingleFile=true -o ${TESTDIR}
 	cd ${TESTDIR} && rm Gitlite.pdb
 	
+test: build
+	venv/bin/pytest -s -v
+	
 clean:
-	cd ${TESTDIR} && rm Gitlite
+	cd ${TESTDIR} && if [ -f Gitlite ]; then rm Gitlite; fi && if [ -d "test_tmp_dir" ]; then rm -rf test_tmp_dir; fi
 	
