@@ -1,7 +1,6 @@
 import os
 import subprocess
 import shutil
-from math import isinf
 
 test_dir = "test_tmp_dir"
 

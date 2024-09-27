@@ -33,6 +33,11 @@ public static class Program
                 Repository.Add(args[1]);
                 break;
             
+            case "commit":
+                Utils.ValidateArguments("commit", args, 2);
+                Repository.Commit(args[1]);
+                break;
+            
             case "read":
                 Utils.ValidateArguments("read", args, 3);
                 Reader.Read(args[1], args[2]);
