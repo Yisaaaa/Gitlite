@@ -1,5 +1,6 @@
 import os
 import subprocess
+import shutil
 
 test_dir = "test_tmp_dir"
 
@@ -7,11 +8,28 @@ def setup():
     """
     Sets up the directory for testing 
     """
-    os.makedirs(test_dir, exist_ok=True)
+    os.chdir("tests")
+    
+    if os.path.isdir(test_dir):
+        shutil.rmtree(test_dir)    
+ 
+    os.makedirs(test_dir)
     os.chdir(test_dir)
     subprocess.run(["cp", "../Gitlite", "./"])
     
-def run_gitlite_cmd(cmd):
+def run_gitlite_cmd(cmd):   
+    """
+    Given a CMD argument, runs the Gitlite command corresponding to it.
+    :param cmd: Command to run on Gitlite 
+    :return: stdout (output), return_code 
+    """
     result = subprocess.run(["./Gitlite"] + cmd.split(), capture_output=True, text=True)
     return result.stdout.strip(), result.returncode
-    
+
+def clean_up():
+    """
+    Cleans up the testing directory.
+    """
+    os.chdir("../")
+    shutil.rmtree(test_dir)
+    os.chdir("../")

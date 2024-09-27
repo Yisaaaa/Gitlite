@@ -4,6 +4,8 @@ BUILD = /home/luis/RiderProjects/Gitlite/Gitlite/bin/Release/net6.0/linux-x64/pu
 # Testing directory
 TESTDIR = ./tests 
 
+FILE = 
+
 all: clean build test clean
 
 build: $(shell find src -type f)
@@ -17,7 +19,7 @@ manual_test: build
 	cp Gitlite test_temp_dir
 	
 test: build
-	venv/bin/pytest -s -v
+	venv/bin/pytest ${FILE} -s -v
 	
 clean:
 	cd ${TESTDIR} && if [ -f Gitlite ]; then rm Gitlite; fi && if [ -d "test_tmp_dir" ]; then rm -rf test_tmp_dir; fi

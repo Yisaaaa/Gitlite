@@ -72,7 +72,6 @@ namespace Gitlite;
         if (!forAddition.ContainsKey(fileName))
         {
             forAddition.Add(fileName, File.ReadAllBytes(fileName));
-            Console.WriteLine("Not yet staged");
         }
         
         byte[] sameFileFromStagingArea = forAddition[fileName];
@@ -80,7 +79,6 @@ namespace Gitlite;
         if (!fileInByte.SequenceEqual(sameFileFromStagingArea))
         {
             forAddition[fileName] = fileInByte;
-            Console.WriteLine("Different file");
         }
 
         byte[] reserializedStagingArea = MessagePackSerializer.Serialize(stagingArea);
