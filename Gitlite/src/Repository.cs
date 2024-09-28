@@ -92,9 +92,9 @@ namespace Gitlite;
          *    parent.
          * 2. Save the new files from staging area as blobs
          * 3. Update blobs of the updated files on staging area for addition.
-         * 4. Clear the staging area.
-         * 5. Update the pointers. HEAD and branch pointer.
-         * 6. Save the commit using its SHA-1 as name.
+         * 4. Clear the staging area and save it.
+         * 5. Save the commit using its SHA-1 as name.
+         * 6. Update the pointers. HEAD and branch pointer.
          */
         
         // Get staging area
@@ -112,8 +112,6 @@ namespace Gitlite;
         Dictionary<string, byte[]> forAddition = stagingArea.GetStagingForAddition();
         Dictionary<string, byte[]> forRemoval = stagingArea.GetStagingForRemoval();
         Commit commitOnHEAD = Gitlite.Commit.GetHeadCommit();
-        commitOnHEAD.LogMessage = logMessage;
-        commitOnHEAD.Timestamp = DateTime.Now;
         Dictionary<string, string> fileMapping = commitOnHEAD.FileMapping;
 
         // Invariant: COMMIT.FileMapping contains the mapping of file names to blobs.
@@ -146,6 +144,19 @@ namespace Gitlite;
         
         // For removal, todo later.
         // code...
+        
+        // Clear the staging area then save
+        forAddition.Clear();
+        forRemoval.Clear();
+        stagingArea.Save();
+        
+        // Create and save the new commit
+        string hashRef = Gitlite.Commit.CreateCommit(logMessage, DateTime.Now, fileMapping, commitOnHEAD.Branch, Gitlite.Commit.GetHash(commitOnHEAD));
+        
+        // Update HEAD and branch pointer
+        Utils.WriteContent(Path.Combine(GITLITE_DIR.ToString(), "HEAD"), hashRef);
+        Utils.WriteContent(Path.Combine(BRANCHES.ToString(), commitOnHEAD.Branch), hashRef);
+        
     }
 
     

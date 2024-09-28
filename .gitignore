@@ -3,7 +3,9 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# Temp testing files and directory
 Gitlite/tests/Gitlite
+Gitlite/tests/test_tmp_dir
 
 # Python environment
 venv
