@@ -64,6 +64,12 @@ public partial class StagingArea
         return Deserialize(serializedObj);
     }
 
+    public void Save()
+    {
+        byte[] serialized = MessagePackSerializer.Serialize(this);
+        Utils.WriteContent(STAGING_AREA, serialized);
+    }
+
     /// <summary>
     /// Creates the staging area under .gitlite directory if it does not exist.
     /// </summary>
@@ -74,8 +80,7 @@ public partial class StagingArea
         if (!staging.Exists)
         {
             StagingArea stagingAreaObject = new StagingArea();
-            byte[] serialized = MessagePackSerializer.Serialize(stagingAreaObject);
-            Utils.WriteContent(staging.ToString(), serialized);
+            stagingAreaObject.Save();
         }
     }
 
