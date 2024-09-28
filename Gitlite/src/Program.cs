@@ -34,7 +34,7 @@ public static class Program
                 break;
             
             case "commit":
-                Utils.ValidateArguments("commit", args, 2);
+                Utils.ValidateArguments("commit", args, 2, "Please provide a commit message.");
                 Repository.Commit(args[1]);
                 break;
             

@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 
 namespace Gitlite;
 
-public class Utils
+public static class Utils
 {
     
     /* READING & WRITING */
@@ -85,18 +85,21 @@ public class Utils
     /// <summary>
     /// Checks if the number of arguments provided with CMD(command) is valid.
     /// </summary>
-    /// <param name="cmd">Command</param>
-    /// <param name="args">The arguments provided along with the COMMAND</param>
+    /// <param name="cmd">Command name.</param>
+    /// <param name="args">The arguments provided along with the COMMAND.</param>
     /// <param name="n">The number of arguments required.</param>
-    /// <exception cref="ArgumentException">Returns an ArgumentException if invalid.</exception>
-    public static void ValidateArguments(string cmd, string[] args, int n)
+    /// <param name="message">Message to print if command is not valid.</param>>
+    public static void ValidateArguments(string cmd, string[] args, int n, string? message=null)
     {
-        if (args.Length != n)
+        if (args.Length == n) return;
+        
+        if (string.IsNullOrEmpty(message))
         {
-            throw new ArgumentException($"Invalid number of arguments for: {cmd}");
+            ExitWithError($"Invalid number of arguments for: {cmd}");
         }
+            
+        ExitWithError(message);
     }
-    
     
     /* HASHING */
     public static string HashBytes(byte[] bytes)
