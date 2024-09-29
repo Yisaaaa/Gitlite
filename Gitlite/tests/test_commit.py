@@ -62,6 +62,26 @@ def test_commit_single_file(setup_and_cleanup):
     stdout, _ = utils.run_gitlite_cmd(cmd)
     assert "hello" in stdout
     
+    
+def test_two_files_same_content(setup_and_cleanup):
+    """
+    Two files with the same content must point to a single blob as file reference.
+    """
+    subprocess.run(["touch a.txt && touch b.txt"], shell=True)
+    subprocess.run(["echo 'hello' >> a.txt && echo 'hello' >> b.txt"], shell=True)
+    utils.run_gitlite_cmd("add a.txt")
+    utils.run_gitlite_cmd("add b.txt")
+    utils.run_gitlite_cmd(["commit", "a commit"])
+
+    with open(".gitlite/HEAD", "r") as file:
+        hash_of_new_commit = file.read().strip()
+    
+    stdout, _ = utils.run_gitlite_cmd(f"read {hash_of_new_commit} commit")
+    a = find_blob_from_commit(stdout, "a.txt")
+    b = find_blob_from_commit(stdout, "b.txt")
+    
+    assert a[1].strip() == b[1].strip()
+    
 
 def find_blob_from_commit(commit_json_serialied, file_name):
     """
@@ -75,6 +95,6 @@ def find_blob_from_commit(commit_json_serialied, file_name):
     
     for line in commit_json_serialied:
         if file_name in line:
-            return [i.strip().replace('"', "") for i in line.split(":")]
+            return [i.strip().replace('"', "").replace(",", "") for i in line.split(":")]
         
         

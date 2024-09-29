@@ -112,7 +112,6 @@ namespace Gitlite;
         Dictionary<string, string> fileMapping = commitOnHEAD.FileMapping;
 
         // Invariant: COMMIT.FileMapping contains the mapping of file names to blobs.
-        // TODO: Check if blob already exists before creating one.
         
         foreach (var keyValuePair in forAddition)
         {
@@ -121,19 +120,15 @@ namespace Gitlite;
             {
                 // Save the contents of file as blob
                 byte[] bytes = keyValuePair.Value;
-                string hash = Utils.HashBytes(bytes);
-                Utils.WriteContent(Path.Combine(BLOBS_DIR.ToString(), hash), bytes);
+                string hash = SaveAsBlob(bytes);
                 
                 // Finally add the mapping to commit
                 fileMapping.Add(keyValuePair.Key, hash);
                 
             } else if (fileMapping.ContainsKey(keyValuePair.Key))
             {
-                /* Update the blob */
-                // Get the bytes of (updated) file in CWD
                 byte[] bytes = keyValuePair.Value;
-                string hash = Utils.HashBytes(bytes);
-                Utils.WriteContent(Path.Combine(BLOBS_DIR.ToString(), hash), bytes);
+                string hash = SaveAsBlob(bytes);
                 
                 // Update the file mapping of commit
                 fileMapping[keyValuePair.Key] = hash;
@@ -188,6 +183,21 @@ namespace Gitlite;
     public static bool GitliteAlreadyInitialized()
     {
         return GITLITE_DIR.Exists;
+    }
+
+    /// <summary>
+    /// Saves CONTENTS as a blob file.
+    /// </summary>
+    /// <param name="contents">Contents to write as blob.</param>
+    /// <returns>The hash value of CONTENTS.</returns>
+    public static string SaveAsBlob(byte[] contents)
+    {
+        string hash = Utils.HashBytes(contents);
+        if (!File.Exists(Path.Combine(BLOBS_DIR.ToString(), hash)))
+        {
+            Utils.WriteContent(Path.Combine(BLOBS_DIR.ToString(), hash), contents);
+        }
+        return hash;
     }
     
 }

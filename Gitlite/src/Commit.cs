@@ -81,7 +81,6 @@ public class Commit
     public static Commit GetHeadCommit()
     {
         string hashRef = Utils.ReadContentsAsString(Path.Combine(Repository.GITLITE_DIR.ToString(), "HEAD"));
-        Console.WriteLine(hashRef);
         Commit commit = Deserialize(Path.Combine(Repository.COMMITS_DIR.ToString(), hashRef));
 
         return commit;
