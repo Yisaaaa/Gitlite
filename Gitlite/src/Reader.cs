@@ -21,7 +21,7 @@ public class Reader
                 break;
             
             case "blob":
-                byte[] bytes = File.ReadAllBytes(Path.Combine(".gitlite/commits", fileName));
+                byte[] bytes = File.ReadAllBytes(Path.Combine(".gitlite/blobs", fileName));
                 string fileContents = System.Text.Encoding.UTF8.GetString(bytes);
                 Console.WriteLine(fileContents);
                 break;

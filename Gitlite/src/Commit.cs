@@ -18,8 +18,6 @@ public class Commit
     [Key(3)] public string Branch { get; set; }
     [Key(4)] public string? ParentHashRef { get; set; }
 
-
-
     public Commit(string logMessage, DateTime timestamp, Dictionary<string, string> fileMapping, string branch, string? parentHashRef)
     {
         this.LogMessage = logMessage;
@@ -67,8 +65,7 @@ public class Commit
     {
         return $"LogMessage: {LogMessage}, Timestamp: {Timestamp}";
     }
-
-
+    
     public static string CreateInitialCommit()
     {
         DateTime unixEpoch = DateTime.UnixEpoch;

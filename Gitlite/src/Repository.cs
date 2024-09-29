@@ -104,9 +104,6 @@ namespace Gitlite;
         if (!stagingArea.IsThereStagedFiles())
         {
             Utils.ExitWithError("No changes added to the commit.");
-        } else if (logMessage == "")
-        {
-            Utils.ExitWithError("Please provide a commit message.");
         }
         
         Dictionary<string, byte[]> forAddition = stagingArea.GetStagingForAddition();
@@ -115,6 +112,7 @@ namespace Gitlite;
         Dictionary<string, string> fileMapping = commitOnHEAD.FileMapping;
 
         // Invariant: COMMIT.FileMapping contains the mapping of file names to blobs.
+        // TODO: Check if blob already exists before creating one.
         
         foreach (var keyValuePair in forAddition)
         {

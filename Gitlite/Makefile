@@ -6,6 +6,8 @@ TESTDIR = ./tests
 
 FILE = 
 
+.PHONY: all build manual_test test clean
+
 all: clean build test clean
 
 build: $(shell find src -type f)
@@ -13,10 +15,10 @@ build: $(shell find src -type f)
 	dotnet publish -c Release -r linux-x64 --self-contained -p:PublishSingleFile=true -o ${TESTDIR}
 	cd ${TESTDIR} && rm Gitlite.pdb
 	
-manual_test: build
+manual_test: clean build
 	cd ${TESTDIR} && \
 	mkdir test_tmp_dir && \
-	cp Gitlite test_temp_dir
+	cp Gitlite ./test_tmp_dir/
 	
 test: build
 	venv/bin/pytest ${FILE} -s -v

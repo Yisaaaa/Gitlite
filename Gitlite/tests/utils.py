@@ -22,10 +22,11 @@ def setup(init=True):
         run_gitlite_cmd("init")
         
 
-def run_gitlite_cmd(cmd):   
+def run_gitlite_cmd(cmd, stderr=False):   
     """
     Given a CMD argument, runs the Gitlite command corresponding to it.
     :param cmd: (str or a list of str) Command to run on Gitlite
+    :param stderr: Also returns stderr if True.
     :return: stdout (output), return_code 
     """
     if isinstance(cmd, str):
@@ -33,6 +34,9 @@ def run_gitlite_cmd(cmd):
     else:
         result = subprocess.run(["./Gitlite"] + cmd, capture_output=True, text=True)
         
+    if stderr:
+        return result.stdout.strip(), result.stderr.strip(), result.returncode
+    
     return result.stdout.strip(), result.returncode
 
 def clean_up():
