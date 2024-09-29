@@ -12,18 +12,18 @@ public partial class StagingArea
     /// Mapping of files for addition. (fileName, contents in byte[])
     /// </summary>
     [Key(0)]
-    private Dictionary<string, byte[]> stagingForAddition { get; set; }
+    private Dictionary<string, byte[]> StagingForAddition { get; set; }
     
     /// <summary>
     /// Mapping of files for addition.
     /// </summary>
     [Key(1)]
-    private Dictionary<string, byte[]> stagingForRemoval { get; set; }
+    private List<string> StagingForRemoval { get; set; }
 
     public StagingArea()
     {
-        stagingForAddition = new Dictionary<string, byte[]>();
-        stagingForRemoval = new Dictionary<string, byte[]>();
+        StagingForAddition = new Dictionary<string, byte[]>();
+        StagingForRemoval = new List<string>();
     }
 
     /// <summary>
@@ -32,16 +32,16 @@ public partial class StagingArea
     /// <returns>A Dictionary with (string, byte[]) pair</returns>
     public Dictionary<string, byte[]> GetStagingForAddition()
     {
-        return stagingForAddition;
+        return StagingForAddition;
     }
 
     /// <summary>
     /// Returns the mapping of files for removal.
     /// </summary>
     /// <returns>A Dictionary with (string, byte[]) pair</returns>
-    public Dictionary<string, byte[]> GetStagingForRemoval()
+    public List<string> GetStagingForRemoval()
     {
-        return stagingForRemoval;
+        return StagingForRemoval;
     }
 
     /// <summary>
@@ -90,7 +90,7 @@ public partial class StagingArea
     public void StringValue()
     {
         Console.WriteLine("For addition:");
-        foreach (var keyValuePair in stagingForAddition)
+        foreach (var keyValuePair in StagingForAddition)
         {
             Console.WriteLine(keyValuePair.Key);
             Console.WriteLine(System.Text.Encoding.UTF8.GetString(keyValuePair.Value));
@@ -98,17 +98,16 @@ public partial class StagingArea
         }
 
         Console.WriteLine("For removal:");
-        foreach (var keyValuePair in stagingForRemoval)
+        foreach (string file in StagingForRemoval)
         {
-            Console.WriteLine(keyValuePair.Key);
-            Console.WriteLine(System.Text.Encoding.UTF8.GetString(keyValuePair.Value));
+            Console.WriteLine(file);
             Console.WriteLine("");
         }
     }
 
     public bool IsThereStagedFiles()
     {
-        return stagingForAddition.Count != 0 || stagingForRemoval.Count != 0;
+        return StagingForAddition.Count != 0 || StagingForRemoval.Count != 0;
     }
     
 }

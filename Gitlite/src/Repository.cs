@@ -43,7 +43,7 @@ namespace Gitlite;
         {
             Utils.ExitWithError("File does not exist.");
         }
-
+        
         StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
         Dictionary<string, byte[]> forAddition = stagingArea.GetStagingForAddition();
 
@@ -107,7 +107,7 @@ namespace Gitlite;
         }
         
         Dictionary<string, byte[]> forAddition = stagingArea.GetStagingForAddition();
-        Dictionary<string, byte[]> forRemoval = stagingArea.GetStagingForRemoval();
+        List<string> forRemoval = stagingArea.GetStagingForRemoval();
         Commit commitOnHEAD = Gitlite.Commit.GetHeadCommit();
         Dictionary<string, string> fileMapping = commitOnHEAD.FileMapping;
 
@@ -136,7 +136,10 @@ namespace Gitlite;
         }
         
         // For removal, todo later.
-        // code...
+        foreach (string file in forRemoval)
+        {
+            fileMapping.Remove(file);
+        }
         
         // Clear the staging area then save
         forAddition.Clear();
@@ -150,6 +153,34 @@ namespace Gitlite;
         Utils.WriteContent(Path.Combine(GITLITE_DIR.ToString(), "HEAD"), hashRef);
         Utils.WriteContent(Path.Combine(BRANCHES.ToString(), commitOnHEAD.Branch), hashRef);
         
+    }
+
+    /// <summary>
+    /// Removes the file from staging or from being tracked.
+    /// </summary>
+    /// <param name="fileName">File to be removed.</param>
+    public static void Rm(string fileName)
+    {
+        // Check the staging area
+        StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
+        Dictionary<string, byte[]> forAddition = stagingArea.GetStagingForAddition();
+        List<string> forRemoval = stagingArea.GetStagingForRemoval();
+
+        if (forAddition.ContainsKey(fileName))
+        {
+            forAddition.Remove(fileName);
+            return;
+        }
+        
+        // If file is currently being tracked...
+        Gitlite.Commit commitOnHEAD = Gitlite.Commit.GetHeadCommit();
+        if (commitOnHEAD.FileMapping.ContainsKey(fileName))
+        {
+            forRemoval.Add(fileName);
+            File.Delete(Path.Combine(CWD.ToString(), fileName));
+        }
+        
+        stagingArea.Save();
     }
 
     
