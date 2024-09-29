@@ -2,37 +2,30 @@ import os
 import subprocess
 import utils
 
-def test_commit_no_log_message():
+def test_commit_no_log_message(setup_and_cleanup):
     """
     Using commit command and not providing a message is not allowed.
     """
-    utils.setup()
     subprocess.run(["touch", "hello.txt", "'hello' >> hello.txt"])
     utils.run_gitlite_cmd("add hello.txt")
     stdout, return_code = utils.run_gitlite_cmd("commit")
     
     assert return_code != 0
     assert "Please provide a commit message." in stdout
-    
-    utils.clean_up()
 
-def test_commit_no_changes():
+def test_commit_no_changes(setup_and_cleanup):
     """
     Using commit command on a repo with no changes is not allowed.
     """
-    utils.setup()
     stdout, return_code = utils.run_gitlite_cmd(["commit", "a commit with no changes"])
     
     assert return_code != 0
     assert "No changes added to the commit." in stdout
     
-    utils.clean_up()
-    
-def test_commit_single_file():
+def test_commit_single_file(setup_and_cleanup):
     """
     Tests committing a single file.
     """
-    utils.setup()
     with open(".gitlite/HEAD", "r") as file:
         hash_of_initial_commit = file.read().strip() 
     
@@ -69,8 +62,6 @@ def test_commit_single_file():
     stdout, _ = utils.run_gitlite_cmd(cmd)
     assert "hello" in stdout
     
-    utils.clean_up()
-
 
 def find_blob_from_commit(commit_json_serialied, file_name):
     """

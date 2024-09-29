@@ -21,7 +21,7 @@ manual_test: clean build
 	cp Gitlite ./test_tmp_dir/
 	
 test: build
-	venv/bin/pytest ${FILE} -s -v
+	source venv/bin/activate && pytest ${FILE} -s -v
 	
 clean:
 	cd ${TESTDIR} && if [ -f Gitlite ]; then rm Gitlite; fi && if [ -d "test_tmp_dir" ]; then rm -rf test_tmp_dir; fi
