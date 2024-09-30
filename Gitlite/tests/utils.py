@@ -1,6 +1,7 @@
 import os
 import subprocess
 import shutil
+from typing import assert_type
 
 test_dir = "test_tmp_dir"
 
@@ -46,3 +47,24 @@ def clean_up():
     os.chdir("../")
     shutil.rmtree(test_dir)
     os.chdir("../")
+    
+    
+def create_file(name, content):
+    """
+    Creates file named NAME with CONTENT as contents.
+    :param name: File name
+    :param content: File content
+    :return: None 
+    """
+    
+    if isinstance(name, str) and isinstance(content, str):
+        subprocess.run(["touch", name])
+        subprocess.run([f"echo '{content}' >> {name}"], shell=True)
+        
+    elif isinstance(name, list) and isinstance(content, list):
+        assert len(name) == len(content), "Must have equal length."
+        
+        for i in range(len(name)):
+            subprocess.run(["touch", name[i]])
+            subprocess.run([f"echo '{content[i]}' >> {name[i]}"])
+        
