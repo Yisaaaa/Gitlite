@@ -2,6 +2,11 @@ using MessagePack;
 
 namespace Gitlite;
 
+/* 
+ * TODO: Do log command.
+ * 
+ */
+
 /// <summary>
 /// Class representing a GitLite repository.
 /// </summary>
@@ -135,7 +140,6 @@ namespace Gitlite;
             }
         }
         
-        // For removal, todo later.
         foreach (string file in forRemoval)
         {
             fileMapping.Remove(file);
@@ -169,7 +173,6 @@ namespace Gitlite;
         if (forAddition.ContainsKey(fileName))
         {
             forAddition.Remove(fileName);
-            return;
         }
         
         // If file is currently being tracked...
