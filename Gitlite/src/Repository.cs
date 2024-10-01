@@ -169,18 +169,20 @@ namespace Gitlite;
         StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
         Dictionary<string, byte[]> forAddition = stagingArea.GetStagingForAddition();
         List<string> forRemoval = stagingArea.GetStagingForRemoval();
+        Gitlite.Commit commitOnHEAD = Gitlite.Commit.GetHeadCommit();
 
         if (forAddition.ContainsKey(fileName))
         {
             forAddition.Remove(fileName);
-        }
-        
-        // If file is currently being tracked...
-        Gitlite.Commit commitOnHEAD = Gitlite.Commit.GetHeadCommit();
-        if (commitOnHEAD.FileMapping.ContainsKey(fileName))
+        } 
+        else if (commitOnHEAD.FileMapping.ContainsKey(fileName))
         {
             forRemoval.Add(fileName);
             File.Delete(Path.Combine(CWD.ToString(), fileName));
+        }
+        else
+        {
+            Utils.ExitWithError($"No reason to remove the file: {fileName}");
         }
         
         stagingArea.Save();
