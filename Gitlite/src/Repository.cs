@@ -199,13 +199,13 @@ namespace Gitlite;
         
         while (true)
         {
+            // TODO: For merge case
+            
             Console.WriteLine("===");
-            Console.WriteLine($"Commit: {commit.Hash}");
-            Console.WriteLine($"Date: {commit.Timestamp}");
-            Console.WriteLine(commit.LogMessage);
+            Console.WriteLine(commit?.ToString());
             Console.WriteLine("===");
 
-            if (commit.ParentHashRef == null)
+            if (commit?.ParentHashRef == null)
             {
                 return;
             }
@@ -213,6 +213,22 @@ namespace Gitlite;
             // Get the parent commit
             Commit? parent = Gitlite.Commit.Deserialize(Path.Combine(COMMITS_DIR.ToString(), commit.ParentHashRef));
             commit = parent;
+        }
+    }
+
+    /// <summary>
+    /// Prints out all the commit in no order.
+    /// </summary>
+    public static void GlobalLog()
+    {
+        string[] commits = Directory.GetFiles(COMMITS_DIR.ToString());
+
+        foreach (string commitHash in commits)
+        {
+            Commit commit = Gitlite.Commit.Deserialize(commitHash);
+            Console.WriteLine("===");
+            Console.WriteLine(commit);
+            Console.WriteLine("===");
         }
     }
 
