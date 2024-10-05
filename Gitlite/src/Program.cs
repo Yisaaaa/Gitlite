@@ -47,6 +47,11 @@ public static class Program
                 Utils.ValidateArguments("rm", args, 2);
                 Repository.Rm(args[1]);
                 break;
+            
+            case "log":
+                Utils.ValidateArguments("log", args, 1);
+                Repository.Log();
+                break;
                 
             default:
                 Utils.ExitWithError($"No command with such name exists: {args[0]}");

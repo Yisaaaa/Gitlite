@@ -151,7 +151,8 @@ namespace Gitlite;
         stagingArea.Save();
         
         // Create and save the new commit
-        string hashRef = Gitlite.Commit.CreateCommit(logMessage, DateTime.Now, fileMapping, commitOnHEAD.Branch, Gitlite.Commit.GetHash(commitOnHEAD));
+        string parent = Utils.ReadContentsAsString(Path.Combine(GITLITE_DIR.ToString(), "HEAD"));
+        string hashRef = Gitlite.Commit.CreateCommit(logMessage, DateTime.Now, fileMapping, commitOnHEAD.Branch, parent);
         
         // Update HEAD and branch pointer
         Utils.WriteContent(Path.Combine(GITLITE_DIR.ToString(), "HEAD"), hashRef);
@@ -188,7 +189,33 @@ namespace Gitlite;
         stagingArea.Save();
     }
 
-    
+    /// <summary>
+    /// Displays the commit history from the HEAD commit backwards until the initial
+    /// commit.
+    /// </summary>
+    public static void Log()
+    {
+        Commit? commit = Gitlite.Commit.GetHeadCommit();
+        
+        while (true)
+        {
+            Console.WriteLine("===");
+            Console.WriteLine($"Commit: {commit.Hash}");
+            Console.WriteLine($"Date: {commit.Timestamp}");
+            Console.WriteLine(commit.LogMessage);
+            Console.WriteLine("===");
+
+            if (commit.ParentHashRef == null)
+            {
+                return;
+            }
+            
+            // Get the parent commit
+            Commit? parent = Gitlite.Commit.Deserialize(Path.Combine(COMMITS_DIR.ToString(), commit.ParentHashRef));
+            commit = parent;
+        }
+    }
+
     /// <summary>
     /// Creates a GitLite branch.
     /// </summary>

@@ -10,13 +10,11 @@ namespace Gitlite;
 public class Commit
 {
     [Key(0)] public string LogMessage { get; set; }
-
     [Key(1)] public DateTime Timestamp { get; set; }
-    
     [Key(2)] public Dictionary<string, string> FileMapping { get; set; }
-    
     [Key(3)] public string Branch { get; set; }
     [Key(4)] public string? ParentHashRef { get; set; }
+    [Key(5)] public string Hash { get; set; }
 
     public Commit(string logMessage, DateTime timestamp, Dictionary<string, string> fileMapping, string branch, string? parentHashRef)
     {
@@ -56,6 +54,7 @@ public class Commit
     {
         Commit commit = new Commit(logMessage, timestamp, fileMapping, branch, parentHashRef);
         string hash = GetHash(commit);
+        commit.Hash = hash;
         byte[] serializedCommit = MessagePackSerializer.Serialize(commit);
         Utils.WriteContent(Path.Combine(Repository.COMMITS_DIR.ToString(), hash), serializedCommit);
         return hash;
@@ -63,7 +62,7 @@ public class Commit
     
     public override string ToString()
     {
-        return $"LogMessage: {LogMessage}, Timestamp: {Timestamp}";
+        return $"LogMessage: {LogMessage}, Timestamp: {Timestamp}, Parent: {ParentHashRef}";
     }
     
     public static string CreateInitialCommit()
@@ -72,8 +71,12 @@ public class Commit
         return CreateCommit("initial commit", unixEpoch, null);
     }
 
-    public static Commit Deserialize(string fileName)
+    public static Commit? Deserialize(string? fileName)
     {
+        if (string.IsNullOrEmpty(fileName))
+        {
+            return null;
+        }
         byte[] byteValue = Utils.ReadContentsAsBytes(fileName);
         return MessagePackSerializer.Deserialize<Commit>(byteValue);
     }
