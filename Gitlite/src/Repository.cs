@@ -233,6 +233,31 @@ namespace Gitlite;
     }
 
     /// <summary>
+    /// Prints out the details of all commits that have the given COMMIT MESSAGE.
+    /// </summary>
+    /// <param name="commitMessage">The commit message of the commit being looked for.</param>
+    public static void Find(string commitMessage)
+    {
+        string[] commitHashRefs = Directory.GetFiles(GITLITE_DIR.ToString());
+        bool matchingCommitFound = false;
+        
+        foreach (string commitRef in commitHashRefs)
+        {
+            Commit deserializedCommit = Gitlite.Commit.Deserialize(commitRef);
+            if (deserializedCommit?.LogMessage.ToLower().Contains(commitMessage.ToLower()) == true)
+            {
+                Console.WriteLine(deserializedCommit);
+                matchingCommitFound = true;
+            }
+        }
+
+        if (!matchingCommitFound)
+        {
+            Console.WriteLine("Found no commit with that message.");
+        }
+    }
+
+    /// <summary>
     /// Creates a GitLite branch.
     /// </summary>
     /// <param name="name">Name of the branch</param>
