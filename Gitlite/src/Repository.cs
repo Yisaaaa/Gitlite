@@ -228,7 +228,6 @@ namespace Gitlite;
             Commit commit = Gitlite.Commit.Deserialize(commitHash);
             Console.WriteLine("===");
             Console.WriteLine(commit);
-            Console.WriteLine("===");
         }
     }
 
@@ -246,6 +245,7 @@ namespace Gitlite;
             Commit deserializedCommit = Gitlite.Commit.Deserialize(commitRef);
             if (deserializedCommit?.LogMessage.ToLower().Contains(commitMessage.ToLower()) == true)
             {
+                Console.WriteLine("===");
                 Console.WriteLine(deserializedCommit);
                 matchingCommitFound = true;
             }
