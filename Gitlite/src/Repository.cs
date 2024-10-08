@@ -238,7 +238,7 @@ namespace Gitlite;
     /// <param name="commitMessage">The commit message of the commit being looked for.</param>
     public static void Find(string commitMessage)
     {
-        string[] commitHashRefs = Directory.GetFiles(GITLITE_DIR.ToString());
+        string[] commitHashRefs = Directory.GetFiles(COMMITS_DIR.ToString());
         bool matchingCommitFound = false;
         
         foreach (string commitRef in commitHashRefs)

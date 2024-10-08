@@ -57,6 +57,11 @@ public static class Program
                 Utils.ValidateArguments("global-log", args, 1);
                 Repository.GlobalLog();
                 break;
+            
+            case "find":
+                Utils.ValidateArguments("find", args, 2);
+                Repository.Find(args[1]);
+                break;
                 
             default:
                 Utils.ExitWithError($"No command with such name exists: {args[0]}");
