@@ -10,7 +10,7 @@ namespace Gitlite;
 /// <summary>
 /// Class representing a GitLite repository.
 /// </summary>
-    public class Repository
+public class Repository
 {
     
     private static DirectoryInfo CWD = Directory.GetParent(AppContext.BaseDirectory);
@@ -42,6 +42,7 @@ namespace Gitlite;
         
         Console.WriteLine($"Initialized a new GitLite at {CWD.ToString()}");
     }
+    
     public static void Add(string fileName)
     {
         if (!File.Exists(fileName))
@@ -71,18 +72,7 @@ namespace Gitlite;
             }
         } 
         
-        if (!forAddition.ContainsKey(fileName))
-        {
-            forAddition.Add(fileName, File.ReadAllBytes(fileName));
-        }
-        
-        byte[] sameFileFromStagingArea = forAddition[fileName];
-        
-        if (!fileInByte.SequenceEqual(sameFileFromStagingArea))
-        {
-            forAddition[fileName] = fileInByte;
-        }
-        
+        forAddition[fileName] = fileInByte;
         stagingArea.Save();
     }
 
