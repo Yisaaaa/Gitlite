@@ -62,7 +62,7 @@ public class Commit
     
     public override string ToString()
     {
-        return $"Commit: {Hash}\n Date: {Timestamp}\n {LogMessage}";
+        return $"Commit: {Hash}\nDate: {Timestamp}\n{LogMessage}";
     }
     
     public static string CreateInitialCommit()

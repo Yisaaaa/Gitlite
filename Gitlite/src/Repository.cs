@@ -203,7 +203,7 @@ namespace Gitlite;
             
             Console.WriteLine("===");
             Console.WriteLine(commit?.ToString());
-            Console.WriteLine("===");
+            Console.WriteLine();
 
             if (commit?.ParentHashRef == null)
             {
