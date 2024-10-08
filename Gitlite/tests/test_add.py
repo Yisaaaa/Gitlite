@@ -1,4 +1,3 @@
-import os
 import subprocess
 import utils
 
@@ -22,4 +21,3 @@ def test_add_on_non_existent_file(setup_and_cleanup):
     
     assert "File does not exist." in stdout
     assert return_code != 0
-    

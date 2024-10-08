@@ -51,28 +51,25 @@ namespace Gitlite;
         
         StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
         Dictionary<string, byte[]> forAddition = stagingArea.GetStagingForAddition();
-
-        // using (FileStream file = File.Open(fileName, FileMode.Open))
-        // {
-        //     // Serializing is kind of useless i Guess
-        //     // byte[] serializedFile = MessagePackSerializer.Serialize(file.ReadByte());
-        //     
-        //     if (!forAddition.ContainsKey(fileName))
-        //     {
-        //         forAddition.Add(fileName, File.ReadAllBytes(fileName));
-        //         Console.WriteLine("Not yet staged");
-        //     }
-        //
-        //     byte[] sameFileFromStagingArea = forAddition[fileName];
-        //
-        //     if (!serializedFile.SequenceEqual(sameFileFromStagingArea))
-        //     {
-        //         forAddition[fileName] = serializedFile;
-        //         Console.WriteLine("Different file");
-        //     }
-        // }
-
+        Commit currentCommit = Gitlite.Commit.GetHeadCommit();
         byte[] fileInByte = File.ReadAllBytes(fileName);
+       
+        // If file is already tracked, check if cwd version is the same as the version tracked by commit
+        if (currentCommit.FileMapping.ContainsKey(fileName))
+        {
+            string blobHashRef = currentCommit.FileMapping[fileName];
+            byte[] fileByteInCurrentCommit = Utils.ReadContentsAsBytes(Path.Combine(BLOBS_DIR.ToString(), blobHashRef));
+            
+            if (fileInByte.SequenceEqual(fileByteInCurrentCommit))
+            {
+                if (forAddition.ContainsKey(blobHashRef))
+                {
+                    forAddition.Remove(fileName);
+                }
+                stagingArea.Save();
+                return;
+            }
+        } 
         
         if (!forAddition.ContainsKey(fileName))
         {
@@ -85,23 +82,12 @@ namespace Gitlite;
         {
             forAddition[fileName] = fileInByte;
         }
-
-        byte[] reserializedStagingArea = MessagePackSerializer.Serialize(stagingArea);
-        Utils.WriteContent(StagingArea.STAGING_AREA, reserializedStagingArea);
+        
+        stagingArea.Save();
     }
 
     public static void Commit(string logMessage)
     {
-        /* Steps:
-         * 1. Clone the current commit. This will be the new commit's
-         *    parent.
-         * 2. Save the new files from staging area as blobs
-         * 3. Update blobs of the updated files on staging area for addition.
-         * 4. Clear the staging area and save it.
-         * 5. Save the commit using its SHA-1 as name.
-         * 6. Update the pointers. HEAD and branch pointer.
-         */
-        
         // Get staging area
         StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
 
