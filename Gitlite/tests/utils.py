@@ -1,7 +1,6 @@
 import os
 import subprocess
 import shutil
-from typing import assert_type
 
 test_dir = "test_tmp_dir"
 

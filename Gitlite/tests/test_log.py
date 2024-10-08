@@ -2,7 +2,7 @@ import utils
 import subprocess
 
 def test_log(setup_and_cleanup):
-    utils.create_file("hello", "I've lost all ambition")
+    utils.create_file("hello", "I have lost all ambition")
     messages = ["First commit", "Second commit", "Third commit"]
     
     for i in range(len(messages)):
