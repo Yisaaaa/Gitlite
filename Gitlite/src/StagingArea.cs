@@ -12,7 +12,7 @@ public partial class StagingArea
     /// Mapping of files for addition. (fileName, contents in byte[])
     /// </summary>
     [Key(0)]
-    private Dictionary<string, byte[]> StagingForAddition { get; set; }
+    private Dictionary<string, string> StagingForAddition { get; set; }
     
     /// <summary>
     /// Mapping of files for addition.
@@ -22,7 +22,7 @@ public partial class StagingArea
 
     public StagingArea()
     {
-        StagingForAddition = new Dictionary<string, byte[]>();
+        StagingForAddition = new Dictionary<string, string>();
         StagingForRemoval = new List<string>();
     }
 
@@ -30,7 +30,7 @@ public partial class StagingArea
     /// Returns the mapping of files for addition.
     /// </summary>
     /// <returns>A Dictionary with (string, byte[]) pair</returns>
-    public Dictionary<string, byte[]> GetStagingForAddition()
+    public Dictionary<string, string> GetStagingForAddition()
     {
         return StagingForAddition;
     }
@@ -93,7 +93,7 @@ public partial class StagingArea
         foreach (var keyValuePair in StagingForAddition)
         {
             Console.WriteLine(keyValuePair.Key);
-            Console.WriteLine(System.Text.Encoding.UTF8.GetString(keyValuePair.Value));
+            Console.WriteLine(keyValuePair.Value);
             Console.WriteLine("");
         }
 

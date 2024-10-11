@@ -3,8 +3,6 @@ using MessagePack;
 namespace Gitlite;
 
 /* 
- * TODO: Do log command.
- * 
  */
 
 /// <summary>
@@ -16,7 +14,7 @@ public class Repository
     private static DirectoryInfo CWD = Directory.GetParent(AppContext.BaseDirectory);
     public static DirectoryInfo GITLITE_DIR = Utils.JoinDirectory(CWD, ".gitlite");
     public static DirectoryInfo COMMITS_DIR = Utils.JoinDirectory(GITLITE_DIR, "commits");
-    private static DirectoryInfo BLOBS_DIR = Utils.JoinDirectory(GITLITE_DIR, "blobs");
+    public static DirectoryInfo BLOBS_DIR = Utils.JoinDirectory(GITLITE_DIR, "blobs");
     private static DirectoryInfo BRANCHES = Utils.JoinDirectory(GITLITE_DIR, "branches");
     
     
@@ -51,28 +49,29 @@ public class Repository
         }
         
         StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
-        Dictionary<string, byte[]> forAddition = stagingArea.GetStagingForAddition();
+        Dictionary<string, string> forAddition = stagingArea.GetStagingForAddition();
         Commit currentCommit = Gitlite.Commit.GetHeadCommit();
-        byte[] fileInByte = File.ReadAllBytes(fileName);
-       
-        // If file is already tracked, check if cwd version is the same as the version tracked by commit
+        byte[] content = File.ReadAllBytes(fileName);
+        string contentHash = Utils.HashBytes(content);
+
         if (currentCommit.FileMapping.ContainsKey(fileName))
         {
-            string blobHashRef = currentCommit.FileMapping[fileName];
-            byte[] fileByteInCurrentCommit = Utils.ReadContentsAsBytes(Path.Combine(BLOBS_DIR.ToString(), blobHashRef));
-            
-            if (fileInByte.SequenceEqual(fileByteInCurrentCommit))
+            string blobRef = currentCommit.FileMapping[fileName];
+
+            // Checks if content in commit and cwd are the same
+            if (blobRef == contentHash && forAddition.ContainsKey(fileName))
             {
-                if (forAddition.ContainsKey(blobHashRef))
-                {
-                    forAddition.Remove(fileName);
-                }
+                // If it is, and we see it is and is currently staged for addition,
+                // we just remove it. This can happen when file is changed, added,
+                // and then changed back to original version.
+                forAddition.Remove(fileName);
                 stagingArea.Save();
                 return;
             }
-        } 
-        
-        forAddition[fileName] = fileInByte;
+        }
+
+        forAddition[fileName] = contentHash;
+        Utils.SaveAsBlob(content);
         stagingArea.Save();
     }
 
@@ -87,7 +86,7 @@ public class Repository
             Utils.ExitWithError("No changes added to the commit.");
         }
         
-        Dictionary<string, byte[]> forAddition = stagingArea.GetStagingForAddition();
+        Dictionary<string, string> forAddition = stagingArea.GetStagingForAddition();
         List<string> forRemoval = stagingArea.GetStagingForRemoval();
         Commit commitOnHEAD = Gitlite.Commit.GetHeadCommit();
         Dictionary<string, string> fileMapping = commitOnHEAD.FileMapping;
@@ -96,24 +95,7 @@ public class Repository
         
         foreach (var keyValuePair in forAddition)
         {
-            // If file in addition is not yet being tracked.
-            if (!fileMapping.ContainsKey(keyValuePair.Key))
-            {
-                // Save the contents of file as blob
-                byte[] bytes = keyValuePair.Value;
-                string hash = SaveAsBlob(bytes);
-                
-                // Finally add the mapping to commit
-                fileMapping.Add(keyValuePair.Key, hash);
-                
-            } else if (fileMapping.ContainsKey(keyValuePair.Key))
-            {
-                byte[] bytes = keyValuePair.Value;
-                string hash = SaveAsBlob(bytes);
-                
-                // Update the file mapping of commit
-                fileMapping[keyValuePair.Key] = hash;
-            }
+            fileMapping[keyValuePair.Key] = keyValuePair.Value;
         }
         
         foreach (string file in forRemoval)
@@ -144,7 +126,7 @@ public class Repository
     {
         // Check the staging area
         StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
-        Dictionary<string, byte[]> forAddition = stagingArea.GetStagingForAddition();
+        Dictionary<string, string> forAddition = stagingArea.GetStagingForAddition();
         List<string> forRemoval = stagingArea.GetStagingForRemoval();
         Gitlite.Commit commitOnHEAD = Gitlite.Commit.GetHeadCommit();
 
@@ -265,19 +247,4 @@ public class Repository
         return GITLITE_DIR.Exists;
     }
 
-    /// <summary>
-    /// Saves CONTENTS as a blob file.
-    /// </summary>
-    /// <param name="contents">Contents to write as blob.</param>
-    /// <returns>The hash value of CONTENTS.</returns>
-    public static string SaveAsBlob(byte[] contents)
-    {
-        string hash = Utils.HashBytes(contents);
-        if (!File.Exists(Path.Combine(BLOBS_DIR.ToString(), hash)))
-        {
-            Utils.WriteContent(Path.Combine(BLOBS_DIR.ToString(), hash), contents);
-        }
-        return hash;
-    }
-    
 }

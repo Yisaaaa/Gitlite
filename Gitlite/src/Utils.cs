@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using static Gitlite.Repository;
 
 namespace Gitlite;
 
@@ -37,6 +38,21 @@ public static class Utils
     public static string ReadContentsAsString(string file)
     {
         return File.ReadAllText(file);
+    }
+    
+    /// <summary>
+    /// Saves CONTENTS as a blob file.
+    /// </summary>
+    /// <param name="contents">Contents to write as blob.</param>
+    /// <returns>The hash value of CONTENTS.</returns>
+    public static string SaveAsBlob(byte[] contents)
+    {
+        string hash = HashBytes(contents);
+        if (!File.Exists(Path.Combine(BLOBS_DIR.ToString(), hash)))
+        {
+            WriteContent(Path.Combine(BLOBS_DIR.ToString(), hash), contents);
+        }
+        return hash;
     }
     
     /* FILE & DIR UTILS*/
