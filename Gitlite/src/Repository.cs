@@ -75,6 +75,10 @@ public class Repository
         stagingArea.Save();
     }
 
+    /// <summary>
+    /// Commits the changes from the staging area with the provided log message.
+    /// </summary>
+    /// <param name="logMessage">The log message for the commit.</param>
     public static void Commit(string logMessage)
     {
         // Get staging area
@@ -86,26 +90,23 @@ public class Repository
             Utils.ExitWithError("No changes added to the commit.");
         }
         
-        Dictionary<string, string> forAddition = stagingArea.GetStagingForAddition();
-        List<string> forRemoval = stagingArea.GetStagingForRemoval();
         Commit commitOnHEAD = Gitlite.Commit.GetHeadCommit();
-        Dictionary<string, string> fileMapping = commitOnHEAD.FileMapping;
+        Dictionary<string, string> fileMapping = new Dictionary<string, string>(commitOnHEAD.FileMapping);
 
         // Invariant: COMMIT.FileMapping contains the mapping of file names to blobs.
         
-        foreach (var keyValuePair in forAddition)
+        foreach (var keyValuePair in stagingArea.GetStagingForAddition())
         {
             fileMapping[keyValuePair.Key] = keyValuePair.Value;
         }
         
-        foreach (string file in forRemoval)
+        foreach (string file in stagingArea.GetStagingForRemoval())
         {
             fileMapping.Remove(file);
         }
         
         // Clear the staging area then save
-        forAddition.Clear();
-        forRemoval.Clear();
+        stagingArea.Clear();
         stagingArea.Save();
         
         // Create and save the new commit
@@ -126,17 +127,15 @@ public class Repository
     {
         // Check the staging area
         StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
-        Dictionary<string, string> forAddition = stagingArea.GetStagingForAddition();
-        List<string> forRemoval = stagingArea.GetStagingForRemoval();
         Commit commitOnHEAD = Gitlite.Commit.GetHeadCommit();
 
-        if (forAddition.ContainsKey(fileName))
+        if (stagingArea.GetStagingForAddition().ContainsKey(fileName))
         {
-            forAddition.Remove(fileName);
+            stagingArea.GetStagingForAddition().Remove(fileName);
         } 
         else if (commitOnHEAD.FileMapping.ContainsKey(fileName))
         {
-            forRemoval.Add(fileName);
+            stagingArea.GetStagingForRemoval().Add(fileName);
             File.Delete(Path.Combine(CWD.ToString(), fileName));
         }
         else

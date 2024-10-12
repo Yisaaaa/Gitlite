@@ -70,6 +70,12 @@ public partial class StagingArea
         Utils.WriteContent(STAGING_AREA, serialized);
     }
 
+    public void Clear()
+    {
+        StagingForAddition.Clear();
+        StagingForRemoval.Clear();
+    }
+
     /// <summary>
     /// Creates the staging area under .gitlite directory if it does not exist.
     /// </summary>
