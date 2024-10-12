@@ -16,12 +16,12 @@ public class Reader
         switch (objectType)
         {
             case "commit":
-                Commit deserialized = Commit.Deserialize(Path.Combine(".gitlite/commits/", fileName));
+                Commit deserialized = Commit.Deserialize(".gitlite/commits/", fileName);
                 Console.WriteLine(JsonSerializer.Serialize(deserialized, new JsonSerializerOptions { WriteIndented = true }));
                 break;
             
             case "blob":
-                byte[] bytes = File.ReadAllBytes(Path.Combine(".gitlite/blobs", fileName));
+                byte[] bytes = Utils.ReadContentsAsBytes(".gitlite/blobs", fileName);
                 string fileContents = System.Text.Encoding.UTF8.GetString(bytes);
                 Console.WriteLine(fileContents);
                 break;

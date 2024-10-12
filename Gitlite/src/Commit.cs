@@ -71,21 +71,22 @@ public class Commit
         return CreateCommit("initial commit", unixEpoch, null);
     }
 
-    public static Commit? Deserialize(string? fileName)
+    public static Commit Deserialize(string path, string? name = null)
     {
-        if (string.IsNullOrEmpty(fileName))
+        if (name != null)
         {
-            return null;
+            path = Path.Combine(path, name);
         }
-        byte[] byteValue = Utils.ReadContentsAsBytes(fileName);
+        
+        Utils.ValidateFile(path);
+        byte[] byteValue = Utils.ReadContentsAsBytes(path);
         return MessagePackSerializer.Deserialize<Commit>(byteValue);
     }
 
     public static Commit GetHeadCommit()
     {
-        string hashRef = Utils.ReadContentsAsString(Path.Combine(Repository.GITLITE_DIR.ToString(), "HEAD"));
-        Commit commit = Deserialize(Path.Combine(Repository.COMMITS_DIR.ToString(), hashRef));
-
+        string hashRef = Utils.ReadContentsAsString(Repository.GITLITE_DIR.ToString(), "HEAD");
+        Commit commit = Deserialize(Repository.COMMITS_DIR.ToString(), hashRef);
         return commit;
     }
 }

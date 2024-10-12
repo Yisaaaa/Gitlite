@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Reflection.Metadata.Ecma335;
 using System.Security.Cryptography;
 using static Gitlite.Repository;
 
@@ -30,14 +32,37 @@ public static class Utils
         File.WriteAllBytes(file, content);
     }
 
-    public static byte[] ReadContentsAsBytes(string file)
+    /// <summary>
+    /// Reads the given file as bytes[]
+    /// </summary>
+    /// <param name="path">File path</param>
+    /// <param name="name">File name</param>
+    /// <returns>A bytes[] representation of the FILE content</returns>
+    public static byte[] ReadContentsAsBytes(string path, string? name = null)
     {
-        return File.ReadAllBytes(file);
+        if (name != null)
+        {
+            path = Path.Combine(path, name);
+        }
+        
+        ValidateFile(path);
+        return File.ReadAllBytes(path);
     }
 
-    public static string ReadContentsAsString(string file)
+    /// <summary>
+    /// Reads the file as string
+    /// </summary>
+    /// <param name="path">File path</param>
+    /// <param name="name">File name</param>
+    /// <returns>Content of FILE in string</returns>
+    public static string ReadContentsAsString(string path, string? name = null)
     {
-        return File.ReadAllText(file);
+        if (name != null)
+        {
+            path = Path.Combine(path, name);
+        }
+        ValidateFile(path);
+        return File.ReadAllText(path);
     }
     
     /// <summary>
@@ -80,6 +105,22 @@ public static class Utils
     {
         return JoinDirectory(first.ToString(), second);
     }
+
+    /// <summary>
+    /// Returns a sorted list of all file names in a directory. 
+    /// </summary>
+    /// <param name="path">Directory path</param>
+    /// <returns>Returns a sorted string[] of all file names</returns>
+    public static string[] GetFilesSorted(string path)
+    {
+        if (!Directory.Exists(path))
+        {
+            throw new ArgumentException("Invalid path: ", path);
+        }
+        
+        string[] files = Directory.GetFiles(path);
+        return files.OrderBy(file => file).ToArray();
+    }
     
     
     /* MESSAGES & ERROR REPORTING*/
@@ -116,6 +157,20 @@ public static class Utils
             
         ExitWithError(message);
     }
+
+    public static void ValidateFile(string path, string? name = null)
+    {
+        if (name != null)
+        {
+            path = Path.Combine(path, name);
+        }
+        
+        if (!File.Exists(path))
+        {
+            throw new ArgumentException("Invalid file: ", path);
+        }
+    }
+
     
     /* HASHING */
     public static string HashBytes(byte[] bytes)
