@@ -89,4 +89,5 @@ public class Commit
         Commit commit = Deserialize(Repository.COMMITS_DIR.ToString(), hashRef);
         return commit;
     }
+    
 }

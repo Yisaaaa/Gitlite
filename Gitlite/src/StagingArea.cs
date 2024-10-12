@@ -109,5 +109,19 @@ public partial class StagingArea
     {
         return StagingForAddition.Count != 0 || StagingForRemoval.Count != 0;
     }
+
+
+    /// <summary>
+    /// Compares a STAGED FILE to a given FILE
+    /// </summary>
+    /// <param name="stagedFile">Name of the staged file</param>
+    /// <param name="otherFile">Path of the other File</param>
+    /// <returns>A boolean value if the staged file and the file has the same content</returns>
+    public bool CompareStagedFileToOtherFile(string stagedFile, string otherFile)
+    {
+        byte[] stagedFileContent = Utils.ReadContentsAsBytes(StagingForAddition[stagedFile]);
+        byte[] otherFileContent = Utils.ReadContentsAsBytes(otherFile);
+        return stagedFileContent.SequenceEqual(otherFileContent);
+    }
     
 }

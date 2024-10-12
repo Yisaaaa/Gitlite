@@ -65,20 +65,6 @@ public static class Utils
         return File.ReadAllText(path);
     }
     
-    /// <summary>
-    /// Saves CONTENTS as a blob file.
-    /// </summary>
-    /// <param name="contents">Contents to write as blob.</param>
-    /// <returns>The hash value of CONTENTS.</returns>
-    public static string SaveAsBlob(byte[] contents)
-    {
-        string hash = HashBytes(contents);
-        if (!File.Exists(Path.Combine(BLOBS_DIR.ToString(), hash)))
-        {
-            WriteContent(Path.Combine(BLOBS_DIR.ToString(), hash), contents);
-        }
-        return hash;
-    }
     
     /* FILE & DIR UTILS*/
   

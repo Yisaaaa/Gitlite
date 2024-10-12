@@ -1,8 +1,8 @@
-using MessagePack;
-
 namespace Gitlite;
 
-/* 
+/*
+ * TODO: Gitlite status
+ * TODO: Refactor overloaded methods in Commit
  */
 
 /// <summary>
@@ -71,7 +71,7 @@ public class Repository
         }
 
         forAddition[fileName] = contentHash;
-        Utils.SaveAsBlob(content);
+        Blob.SaveAsBlob(content);
         stagingArea.Save();
     }
 
@@ -109,7 +109,7 @@ public class Repository
         stagingArea.Save();
         
         // Create and save the new commit
-        string parent = Utils.ReadContentsAsString(Path.Combine(GITLITE_DIR.ToString(), "HEAD"));
+        string parent = Utils.ReadContentsAsString(GITLITE_DIR.ToString(), "HEAD");
         string hashRef = Gitlite.Commit.CreateCommit(logMessage, DateTime.Now, fileMapping, commitOnHEAD.Branch, parent);
         
         // Update HEAD and branch pointer
@@ -128,7 +128,7 @@ public class Repository
         StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
         Dictionary<string, string> forAddition = stagingArea.GetStagingForAddition();
         List<string> forRemoval = stagingArea.GetStagingForRemoval();
-        Gitlite.Commit commitOnHEAD = Gitlite.Commit.GetHeadCommit();
+        Commit commitOnHEAD = Gitlite.Commit.GetHeadCommit();
 
         if (forAddition.ContainsKey(fileName))
         {
@@ -153,11 +153,16 @@ public class Repository
     /// </summary>
     public static void Log()
     {
-        Commit? commit = Gitlite.Commit.GetHeadCommit();
+        Commit commit = Gitlite.Commit.GetHeadCommit();
         
         while (true)
         {
-            // TODO: For merge case
+            
+            /*
+             * TODO: Merge case
+             * I think we just need to print out the second parent after merging and
+             * this should be updated in the Commit.ToString() method.
+             */
             
             Console.WriteLine("===");
             Console.WriteLine(commit?.ToString());
@@ -169,7 +174,7 @@ public class Repository
             }
             
             // Get the parent commit
-            Commit? parent = Gitlite.Commit.Deserialize(Path.Combine(COMMITS_DIR.ToString(), commit.ParentHashRef));
+            Commit? parent = Gitlite.Commit.Deserialize(COMMITS_DIR.ToString(), commit.ParentHashRef);
             commit = parent;
         }
     }
@@ -180,7 +185,6 @@ public class Repository
     public static void GlobalLog()
     {
         string[] commits = Directory.GetFiles(COMMITS_DIR.ToString());
-
         foreach (string commitHash in commits)
         {
             Commit commit = Gitlite.Commit.Deserialize(commitHash);
@@ -213,6 +217,121 @@ public class Repository
         {
             Console.WriteLine("Found no commit with that message.");
         }
+    }
+
+    /// <summary>
+    /// Displays the current status of the Gitlite repository.
+    /// This includes branches and active branch, staged and removed files,
+    /// as well as modified and untracked files in the working directory.
+    /// </summary>
+    public static void Status()
+    {
+        string[] branches = GetExistingBranches();
+        StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
+        Dictionary<string, string> stagedFiles = stagingArea.GetStagingForAddition();
+        List<string> removedFiles = stagingArea.GetStagingForRemoval();
+        string[] filesInCWD = Directory.GetFiles(CWD.ToString());
+        Dictionary<string, string> filesInCurrentCommit = Gitlite.Commit.GetHeadCommit().FileMapping;
+        List<string> untrackedFiles = new List<string>();
+        List<string> modifiedButNotStaged = new List<string>();
+               
+        foreach (string file in filesInCWD)
+        {
+            if (!filesInCurrentCommit.ContainsKey(file) && !stagedFiles.ContainsKey(file))
+            {
+                untrackedFiles.Add(file);
+            } else if (IsModifiedButNotStaged(file,
+                           filesInCurrentCommit,
+                           stagedFiles,
+                           removedFiles,
+                           stagingArea))
+            {
+                modifiedButNotStaged.Add(file);
+            }
+        }
+
+        foreach (var VARIABLE in COLLECTION)
+        {
+            
+        }
+        
+        
+    }
+
+    private static bool IsModifiedButNotStaged(string file,
+        Dictionary<string, string> commitFileMapping,
+        Dictionary<string, string> stagedFiles,
+        List<string> removedFiles,
+        StagingArea stagingArea)
+    {
+        /*
+         * A file in the working directory is “modified but not staged” if it is
+           
+           Tracked in the current commit, changed in the working directory, but not staged; or
+           Staged for addition, but with different contents than in the working directory; or
+           Staged for addition, but deleted in the working directory; or
+           Not staged for removal, but tracked in the current commit and deleted from the working directory.
+         */
+
+        if (commitFileMapping.ContainsKey(file))
+        {
+            if (!Blob.CompareToOtherFile(commitFileMapping[file], file) && !stagedFiles.ContainsKey(file))
+            {
+                return true;
+            }
+
+            if (!removedFiles.Contains(file) && commitFileMapping.ContainsKey(file) &&
+                !File.Exists(Path.Combine(CWD.ToString(), file)))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        if (stagedFiles.ContainsKey(file) && stagingArea.CompareStagedFileToOtherFile(stagedFiles[file], file))
+        {
+            return true;
+        }
+
+        if (stagedFiles.ContainsKey(file) && !File.Exists(Path.Combine(CWD.ToString(), file)))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Helper function that gets all existing branches and marks the active
+    /// branch with '*'
+    /// </summary>
+    /// <returns>A string[] of all branches</returns>
+    private static string[] GetExistingBranches()
+    {
+        string[] branches = Utils.GetFilesSorted(BRANCHES.ToString());
+        for (int i = 0; i < branches.Length; i++)
+        {
+            if (IsCurrentBranch(branches[i]))
+            {
+                branches[i] = "*" + branches[i];
+            }
+        }
+
+        return branches;
+    }
+
+    /// <summary>
+    /// Checks if given BRANCH is the active branch
+    /// </summary>
+    /// <param name="branch">Branch name</param>
+    /// <returns>A boolean value if BRANCH is active</returns>
+    private static bool IsCurrentBranch(string branch)
+    {
+        string HEADhash = Utils.ReadContentsAsString(GITLITE_DIR.ToString(), "HEAD");
+        string branchHash = Utils.ReadContentsAsString(BRANCHES.ToString(), branch);
+
+        return HEADhash == branchHash;
     }
 
     /// <summary>
