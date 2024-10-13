@@ -105,7 +105,7 @@ public static class Utils
         }
         
         string[] files = Directory.GetFiles(path);
-        return files.OrderBy(file => file).ToArray();
+        return files.OrderBy(file => file).Select(file => Path.GetFileName(file)).ToArray();
     }
     
     

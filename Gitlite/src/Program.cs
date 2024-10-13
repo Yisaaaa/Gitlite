@@ -62,6 +62,11 @@ public static class Program
                 Utils.ValidateArguments("find", args, 2);
                 Repository.Find(args[1]);
                 break;
+            
+            case "status":
+                Utils.ValidateArguments("status", args, 1);
+                Repository.Status();
+                break;
                 
             default:
                 Utils.ExitWithError($"No command with such name exists: {args[0]}");

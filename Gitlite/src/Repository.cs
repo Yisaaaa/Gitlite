@@ -11,7 +11,7 @@ namespace Gitlite;
 public class Repository
 {
     
-    private static DirectoryInfo CWD = Directory.GetParent(AppContext.BaseDirectory);
+    public static DirectoryInfo CWD = Directory.GetParent(AppContext.BaseDirectory);
     public static DirectoryInfo GITLITE_DIR = Utils.JoinDirectory(CWD, ".gitlite");
     public static DirectoryInfo COMMITS_DIR = Utils.JoinDirectory(GITLITE_DIR, "commits");
     public static DirectoryInfo BLOBS_DIR = Utils.JoinDirectory(GITLITE_DIR, "blobs");
@@ -229,35 +229,73 @@ public class Repository
         StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
         Dictionary<string, string> stagedFiles = stagingArea.GetStagingForAddition();
         List<string> removedFiles = stagingArea.GetStagingForRemoval();
-        string[] filesInCWD = Directory.GetFiles(CWD.ToString());
+        string[] filesInCWD = Utils.GetFilesSorted(CWD.ToString()).Where(file => !file.EndsWith("Gitlite")).ToArray();
         Dictionary<string, string> filesInCurrentCommit = Gitlite.Commit.GetHeadCommit().FileMapping;
         List<string> untrackedFiles = new List<string>();
         List<string> modifiedButNotStaged = new List<string>();
-               
+        
+        // Get the untracked or modified yet not staged files
         foreach (string file in filesInCWD)
         {
+            bool fileExists = File.Exists(file);
             if (!filesInCurrentCommit.ContainsKey(file) && !stagedFiles.ContainsKey(file))
             {
                 untrackedFiles.Add(file);
-            } else if (IsModifiedButNotStaged(file,
+            } else if (IsModifiedButNotStaged(file, 
+                           fileExists,
                            filesInCurrentCommit,
                            stagedFiles,
                            removedFiles,
                            stagingArea))
             {
-                modifiedButNotStaged.Add(file);
+                if (!fileExists)
+                {
+                    modifiedButNotStaged.Add($"{file} (deleted)");
+                }
+                modifiedButNotStaged.Add($"{file} (modified)");
             }
         }
 
-        foreach (var VARIABLE in COLLECTION)
+        // Start displaying branches, staged files, etc.
+        Console.WriteLine("=== Branches ===");
+        foreach (string branch in branches)
         {
-            
+            Console.WriteLine(branch);
         }
+        Console.WriteLine();
+
+        Console.WriteLine("=== Staged Files ===");
+        foreach (KeyValuePair<string, string> pair in stagedFiles.OrderBy(pair => pair.Key))
+        {
+            Console.WriteLine(pair.Key);
+        }
+        Console.WriteLine();
+
+        Console.WriteLine("=== Removed Files ===");
+        foreach (string file in removedFiles.OrderBy(file => file))
+        {
+            Console.WriteLine(file);
+        }
+        Console.WriteLine();
         
+        Console.WriteLine("=== Modifications Not Staged For Commit ===");
+        foreach (string file in modifiedButNotStaged.OrderBy(file => file))
+        {
+            Console.WriteLine(file);
+        }
+        Console.WriteLine();
+
+        Console.WriteLine("=== Untracked Files ===");
+        foreach (string file in untrackedFiles.OrderBy(file => file))
+        {
+            Console.WriteLine(file);
+        }
+        Console.WriteLine();
         
     }
 
     private static bool IsModifiedButNotStaged(string file,
+        bool fileExists,
         Dictionary<string, string> commitFileMapping,
         Dictionary<string, string> stagedFiles,
         List<string> removedFiles,
@@ -280,7 +318,7 @@ public class Repository
             }
 
             if (!removedFiles.Contains(file) && commitFileMapping.ContainsKey(file) &&
-                !File.Exists(Path.Combine(CWD.ToString(), file)))
+                !fileExists)
             {
                 return true;
             }
@@ -288,12 +326,12 @@ public class Repository
             return false;
         }
 
-        if (stagedFiles.ContainsKey(file) && stagingArea.CompareStagedFileToOtherFile(stagedFiles[file], file))
+        if (stagedFiles.ContainsKey(file) && !stagingArea.CompareStagedFileToOtherFile(stagedFiles[file], file))
         {
             return true;
         }
 
-        if (stagedFiles.ContainsKey(file) && !File.Exists(Path.Combine(CWD.ToString(), file)))
+        if (stagedFiles.ContainsKey(file) && !fileExists)
         {
             return true;
         }

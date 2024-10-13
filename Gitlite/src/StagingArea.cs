@@ -118,15 +118,16 @@ public partial class StagingArea
 
 
     /// <summary>
-    /// Compares a STAGED FILE to a given FILE
+    /// Compares a STAGED FILE to a given FILE. It does this by checking the content blob of the
+    /// staged file to the other file.
     /// </summary>
-    /// <param name="stagedFile">Name of the staged file</param>
+    /// <param name="stagedFileBlobRef">Name of the staged file</param>
     /// <param name="otherFile">Path of the other File</param>
     /// <returns>A boolean value if the staged file and the file has the same content</returns>
-    public bool CompareStagedFileToOtherFile(string stagedFile, string otherFile)
+    public bool CompareStagedFileToOtherFile(string stagedFileBlobRef, string otherFile)
     {
-        byte[] stagedFileContent = Utils.ReadContentsAsBytes(StagingForAddition[stagedFile]);
-        byte[] otherFileContent = Utils.ReadContentsAsBytes(otherFile);
+        byte[] stagedFileContent = Utils.ReadContentsAsBytes(Repository.BLOBS_DIR.ToString(), stagedFileBlobRef);
+        byte[] otherFileContent = Utils.ReadContentsAsBytes(Repository.CWD.ToString(), otherFile);
         return stagedFileContent.SequenceEqual(otherFileContent);
     }
     
