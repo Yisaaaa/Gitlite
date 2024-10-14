@@ -9,7 +9,7 @@ public partial class StagingArea
     public static string STAGING_AREA = Path.Combine(Repository.GITLITE_DIR.ToString(), "staging");
 
     /// <summary>
-    /// Mapping of files for addition. (fileName, contents in byte[])
+    /// Mapping of files for addition. (fileName, blob hash ref)
     /// </summary>
     [Key(0)]
     private Dictionary<string, string> StagingForAddition { get; set; }
@@ -119,16 +119,15 @@ public partial class StagingArea
 
     /// <summary>
     /// Compares a STAGED FILE to a given FILE. It does this by checking the content blob of the
-    /// staged file to the other file.
+    /// staged file to the other file in cwd.
     /// </summary>
     /// <param name="stagedFileBlobRef">Name of the staged file</param>
-    /// <param name="otherFile">Path of the other File</param>
+    /// <param name="otherFile">Path of the other File in cwd</param>
     /// <returns>A boolean value if the staged file and the file has the same content</returns>
-    public bool CompareStagedFileToOtherFile(string stagedFileBlobRef, string otherFile)
+    public bool IsStagedFileEqualToOtherFile(string stagedFileBlobRef, string otherFile)
     {
-        byte[] stagedFileContent = Utils.ReadContentsAsBytes(Repository.BLOBS_DIR.ToString(), stagedFileBlobRef);
         byte[] otherFileContent = Utils.ReadContentsAsBytes(Repository.CWD.ToString(), otherFile);
-        return stagedFileContent.SequenceEqual(otherFileContent);
+        return Utils.HashBytes(otherFileContent) == stagedFileBlobRef;
     }
     
 }

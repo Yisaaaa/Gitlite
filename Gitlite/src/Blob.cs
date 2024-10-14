@@ -23,10 +23,9 @@ public static class Blob
     /// <param name="blobRef">Hash reference of the blob</param>
     /// <param name="otherFile">File path of the file to compare to</param>
     /// <returns>A boolean value if the blob and the file has the same content</returns>
-    public static bool CompareToOtherFile(string blobRef, string otherFile)
+    public static bool IsEqualToOtherFile(string blobRef, string otherFile)
     {
-        byte[] blobContent = Utils.ReadContentsAsBytes(Repository.BLOBS_DIR.ToString(), blobRef);
         byte[] otherFileContent = Utils.ReadContentsAsBytes(otherFile);
-        return blobContent.SequenceEqual(otherFileContent);
+        return Utils.HashBytes(otherFileContent) == blobRef;
     }
 }

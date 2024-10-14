@@ -48,7 +48,7 @@ def clean_up():
     os.chdir("../")
     
     
-def create_file(name, content):
+def create_file(name, content=""):
     """
     Creates file named NAME with CONTENT as contents.
     :param name: File name

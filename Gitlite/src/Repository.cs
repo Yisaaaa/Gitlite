@@ -11,6 +11,7 @@ namespace Gitlite;
 public class Repository
 {
     
+    // TODO: Might refactor and convert these into just strings
     public static DirectoryInfo CWD = Directory.GetParent(AppContext.BaseDirectory);
     public static DirectoryInfo GITLITE_DIR = Utils.JoinDirectory(CWD, ".gitlite");
     public static DirectoryInfo COMMITS_DIR = Utils.JoinDirectory(GITLITE_DIR, "commits");
@@ -225,118 +226,94 @@ public class Repository
     /// </summary>
     public static void Status()
     {
-        string[] branches = GetExistingBranches();
+        List<string> notStagedAndModified = new List<string>();
+        List<string> untrackedFiles = new List<string>();
         StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
         Dictionary<string, string> stagedFiles = stagingArea.GetStagingForAddition();
-        List<string> removedFiles = stagingArea.GetStagingForRemoval();
-        string[] filesInCWD = Utils.GetFilesSorted(CWD.ToString()).Where(file => !file.EndsWith("Gitlite")).ToArray();
-        Dictionary<string, string> filesInCurrentCommit = Gitlite.Commit.GetHeadCommit().FileMapping;
-        List<string> untrackedFiles = new List<string>();
-        List<string> modifiedButNotStaged = new List<string>();
+        Commit currentCommit = Gitlite.Commit.GetHeadCommit();
         
-        // Get the untracked or modified yet not staged files
-        foreach (string file in filesInCWD)
-        {
-            bool fileExists = File.Exists(file);
-            if (!filesInCurrentCommit.ContainsKey(file) && !stagedFiles.ContainsKey(file))
+        
+        foreach (var file in Directory.GetFiles(CWD.ToString()))
+        { // Checkpoint: Doing untracked and modified case 1
+            string filename = Path.GetFileName(file);
+            
+            if (filename == "Gitlite") continue;
+            
+            if (!stagedFiles.ContainsKey(filename))
             {
-                untrackedFiles.Add(file);
-            } else if (IsModifiedButNotStaged(file, 
-                           fileExists,
-                           filesInCurrentCommit,
-                           stagedFiles,
-                           removedFiles,
-                           stagingArea))
-            {
-                if (!fileExists)
+                // If a file is not staged and not tracked in the commit,
+                // then it's untracked.
+                if (!currentCommit.FileMapping.ContainsKey(filename))
                 {
-                    modifiedButNotStaged.Add($"{file} (deleted)");
+                    untrackedFiles.Add(filename);
                 }
-                modifiedButNotStaged.Add($"{file} (modified)");
+                else if (currentCommit.FileMapping.ContainsKey(filename))
+                {
+                    if (!Blob.IsEqualToOtherFile(currentCommit.FileMapping[filename], file)) 
+                    {
+                        Console.WriteLine(filename);
+                        notStagedAndModified.Add(filename + " (modified)");
+                    }
+                }
             }
         }
 
-        // Start displaying branches, staged files, etc.
+        foreach (var file in currentCommit.FileMapping)
+        {
+            if (!File.Exists(Path.Combine(CWD.ToString(), file.Key)) && !stagingArea.GetStagingForRemoval().Contains(file.Key))
+            {
+                notStagedAndModified.Add(file.Key + " (deleted)");
+            }
+        }
+        
+        // Display all branches
         Console.WriteLine("=== Branches ===");
-        foreach (string branch in branches)
+        foreach (var branch in GetExistingBranches())
         {
-            Console.WriteLine(branch);
-        }
-        Console.WriteLine();
-
-        Console.WriteLine("=== Staged Files ===");
-        foreach (KeyValuePair<string, string> pair in stagedFiles.OrderBy(pair => pair.Key))
-        {
-            Console.WriteLine(pair.Key);
-        }
-        Console.WriteLine();
-
-        Console.WriteLine("=== Removed Files ===");
-        foreach (string file in removedFiles.OrderBy(file => file))
-        {
-            Console.WriteLine(file);
-        }
-        Console.WriteLine();
-        
-        Console.WriteLine("=== Modifications Not Staged For Commit ===");
-        foreach (string file in modifiedButNotStaged.OrderBy(file => file))
-        {
-            Console.WriteLine(file);
-        }
-        Console.WriteLine();
-
-        Console.WriteLine("=== Untracked Files ===");
-        foreach (string file in untrackedFiles.OrderBy(file => file))
-        {
-            Console.WriteLine(file);
-        }
-        Console.WriteLine();
-        
-    }
-
-    private static bool IsModifiedButNotStaged(string file,
-        bool fileExists,
-        Dictionary<string, string> commitFileMapping,
-        Dictionary<string, string> stagedFiles,
-        List<string> removedFiles,
-        StagingArea stagingArea)
-    {
-        /*
-         * A file in the working directory is “modified but not staged” if it is
-           
-           Tracked in the current commit, changed in the working directory, but not staged; or
-           Staged for addition, but with different contents than in the working directory; or
-           Staged for addition, but deleted in the working directory; or
-           Not staged for removal, but tracked in the current commit and deleted from the working directory.
-         */
-
-        if (commitFileMapping.ContainsKey(file))
-        {
-            if (!Blob.CompareToOtherFile(commitFileMapping[file], file) && !stagedFiles.ContainsKey(file))
+            if (IsCurrentBranch(branch))
             {
-                return true;
-            }
+                Console.WriteLine("*" + branch);
+            } else Console.WriteLine(branch);
+        }
+        
+        Console.WriteLine("\n=== Staged Files ===");
+        foreach (var file in stagedFiles.OrderBy(f => f.Key))
+        {
 
-            if (!removedFiles.Contains(file) && commitFileMapping.ContainsKey(file) &&
-                !fileExists)
+            // Modified: Case 3
+            if (!File.Exists(Path.Combine(CWD.ToString(), file.Key)))
             {
-                return true;
+                notStagedAndModified.Add(file.Key + " (deleted)");
             }
-
-            return false;
+            // Modified: Case 2
+            else if (!stagingArea.IsStagedFileEqualToOtherFile(file.Value, file.Key))
+            {
+                notStagedAndModified.Add(file.Key + " (modified stg)");
+            }
+            else
+            {
+                Console.WriteLine(file.Key);
+            }
         }
 
-        if (stagedFiles.ContainsKey(file) && !stagingArea.CompareStagedFileToOtherFile(stagedFiles[file], file))
+        Console.WriteLine("\n=== Removed Files ===");
+        foreach (var file in stagingArea.GetStagingForRemoval().OrderBy(f => f))
         {
-            return true;
+            Console.WriteLine(file);
         }
 
-        if (stagedFiles.ContainsKey(file) && !fileExists)
+        Console.WriteLine("\n=== Modifications Not Staged For Commit ===");
+        foreach (var file in notStagedAndModified.OrderBy(f => f))
         {
-            return true;
+            Console.WriteLine(file);
         }
 
-        return false;
+        Console.WriteLine("\n=== Untracked Files ===");
+        foreach (var file in untrackedFiles.OrderBy(f => f))
+        {
+            Console.WriteLine(file);
+        }
+        
     }
 
     /// <summary>
@@ -347,14 +324,6 @@ public class Repository
     private static string[] GetExistingBranches()
     {
         string[] branches = Utils.GetFilesSorted(BRANCHES.ToString());
-        for (int i = 0; i < branches.Length; i++)
-        {
-            if (IsCurrentBranch(branches[i]))
-            {
-                branches[i] = "*" + branches[i];
-            }
-        }
-
         return branches;
     }
 
