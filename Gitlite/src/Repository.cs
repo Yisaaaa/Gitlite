@@ -1,8 +1,10 @@
 namespace Gitlite;
 
 /*
- * TODO: Gitlite status
- * TODO: Refactor overloaded methods in Commit
+ * TODO: Refactor file structure. Adopt the hash table like datastructure
+ * TODO: only that it is implemented with file system.
+ * TODO: Update the design document brought by the changes of file structure refactoring.
+ * TODO: Refactor overloaded methods in Commit.
  */
 
 /// <summary>

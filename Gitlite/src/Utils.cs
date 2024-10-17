@@ -163,4 +163,15 @@ public static class Utils
     {
         return Convert.ToHexString(SHA1.HashData(bytes)).ToLower();
     }
+    
+    /// <summary>
+    /// Splits the given HASH into two (directory, filename). This is to easily navigate
+    /// inside Gitlite's inner file structure.
+    /// </summary>
+    /// <param name="hash">Hash to split.</param>
+    /// <returns>Returns a tuple containing the first two digits of hash, and the rest.</returns>
+    public static (string, string) SplitHashPath(string hash)
+    {
+        return (hash.Substring(0, 2), hash.Substring(2));
+    }
 }
