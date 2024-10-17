@@ -16,7 +16,7 @@ public class Reader
         switch (objectType)
         {
             case "commit":
-                Commit deserialized = Commit.Deserialize(".gitlite/commits/", fileName);
+                Commit deserialized = Commit.Deserialize(fileName);
                 Console.WriteLine(JsonSerializer.Serialize(deserialized, new JsonSerializerOptions { WriteIndented = true }));
                 break;
             

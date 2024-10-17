@@ -42,7 +42,8 @@ def test_commit_single_file(setup_and_cleanup):
     assert hash_of_new_commit != hash_of_initial_commit
     
     # New commit object must exist on .gitlite/commits/
-    new_commit_path = f".gitlite/commits/{hash_of_new_commit}"
+    first_two_digits, rest = hash_of_new_commit[0:2], hash_of_new_commit[2:]
+    new_commit_path = os.path.join(".gitlite", "commits", first_two_digits, rest)
     assert os.path.exists(new_commit_path)
     
     # Master pointer must be updated

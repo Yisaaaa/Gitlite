@@ -3,6 +3,13 @@ using MessagePack;
     
 namespace Gitlite;
 
+/*
+ * BUG: When writing a commit for the first time, we have to first create the
+ * BUG: commit hash's first two digit directory.
+ *
+ * 
+ */
+
 /// <summary>
 /// Class that represents GitLite commits.
 /// </summary>
@@ -56,8 +63,17 @@ public class Commit
         string hash = GetHash(commit);
         commit.Hash = hash;
         byte[] serializedCommit = MessagePackSerializer.Serialize(commit);
-        Utils.WriteContent(Path.Combine(Repository.COMMITS_DIR.ToString(), hash), serializedCommit);
+        commit.WriteCommit(serializedCommit);
         return hash;
+    }
+
+    private void WriteCommit(byte[] serializedCommit)
+    {
+        var (firstTwoDigits, rest) = Utils.SplitHashPath(Hash);
+        string path = Path.Combine(Repository.COMMITS_DIR.ToString(), firstTwoDigits);
+        Directory.CreateDirectory(path);
+        path = Path.Combine(path, rest);
+        Utils.WriteContent(path, serializedCommit);
     }
     
     public override string ToString()
@@ -71,22 +87,28 @@ public class Commit
         return CreateCommit("initial commit", unixEpoch, null);
     }
 
-    public static Commit Deserialize(string path, string? name = null)
+    public static Commit Deserialize(string hash)
     {
-        if (name != null)
-        {
-            path = Path.Combine(path, name);
-        }
-        
+        var (firstTwoDigits, rest) = Utils.SplitHashPath(hash);
+        string path = Path.Combine(Repository.COMMITS_DIR.ToString(), firstTwoDigits, rest);
         Utils.ValidateFile(path);
-        byte[] byteValue = Utils.ReadContentsAsBytes(path);
-        return MessagePackSerializer.Deserialize<Commit>(byteValue);
+        byte[] commitAsByte = Utils.ReadContentsAsBytes(path);
+        return MessagePackSerializer.Deserialize<Commit>(commitAsByte);
+
+        // if (name != null)
+        // {
+        //     path = Path.Combine(path, name);
+        // }
+        //
+        // Utils.ValidateFile(path);
+        // byte[] byteValue = Utils.ReadContentsAsBytes(path);
+        // return MessagePackSerializer.Deserialize<Commit>(byteValue);
     }
 
     public static Commit GetHeadCommit()
     {
         string hashRef = Utils.ReadContentsAsString(Repository.GITLITE_DIR.ToString(), "HEAD");
-        Commit commit = Deserialize(Repository.COMMITS_DIR.ToString(), hashRef);
+        Commit commit = Deserialize(hashRef);
         return commit;
     }
     

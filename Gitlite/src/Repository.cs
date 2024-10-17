@@ -3,6 +3,8 @@ namespace Gitlite;
 /*
  * TODO: Refactor file structure. Adopt the hash table like datastructure
  * TODO: only that it is implemented with file system.
+ * TODO: First thing to do is to update all things (e.g. methods) related to commit files.
+ * 
  * TODO: Update the design document brought by the changes of file structure refactoring.
  * TODO: Refactor overloaded methods in Commit.
  */
@@ -176,7 +178,7 @@ public class Repository
             }
             
             // Get the parent commit
-            Commit? parent = Gitlite.Commit.Deserialize(COMMITS_DIR.ToString(), commit.ParentHashRef);
+            Commit? parent = Gitlite.Commit.Deserialize(commit.ParentHashRef);
             commit = parent;
         }
     }
