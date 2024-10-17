@@ -18,7 +18,7 @@ manual_test:
 	cd .. && make manual_test
 	
 test:
-	cd .. && make test FILE=${FILE}
+	cd .. && make test FILE="tests/${FILE}"
 	
 clean:
 	cd .. && make clean
