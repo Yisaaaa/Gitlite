@@ -67,6 +67,11 @@ public static class Program
                 Utils.ValidateArguments("status", args, 1);
                 Repository.Status();
                 break;
+            
+            case "checkout":
+                // Arguments validation handled inside the Checkout method.
+                Repository.Checkout(args);
+                break;
                 
             default:
                 Utils.ExitWithError($"No command with such name exists: {args[0]}");

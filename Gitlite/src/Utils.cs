@@ -143,21 +143,21 @@ public static class Utils
             
         ExitWithError(message);
     }
-
+    
     public static void ValidateFile(string path, string? name = null)
     {
         if (name != null)
         {
             path = Path.Combine(path, name);
         }
-        
+
         if (!File.Exists(path))
         {
             throw new ArgumentException("Invalid file: ", path);
         }
     }
 
-    
+
     /* HASHING */
     public static string HashBytes(byte[] bytes)
     {

@@ -326,8 +326,44 @@ public class Repository
         {
             Console.WriteLine(file);
         }
-        
     }
+
+    public static void Checkout(string[] args)
+    {
+        ValidateCheckoutCommand(args);
+
+        if (args.Length == 3)
+        {
+            if (args[1] != "--") Utils.ExitWithError("Invalid arguments specified.");
+            CheckoutWithFile(args[2]);
+        }
+    }
+
+    private static void CheckoutWithFile(string filename)
+    {
+        Commit headCommit = Gitlite.Commit.GetHeadCommit();
+        if (!headCommit.FileMapping.ContainsKey(filename))
+        {
+            Utils.ExitWithError("File does not exists in the current commit.");
+        }
+        
+        string fileContentInHeadCommit = Blob.ReadBlobContentAsString(headCommit.FileMapping[filename]);
+        Utils.WriteContent(filename, fileContentInHeadCommit);
+    }
+    
+    /// <summary>
+    /// Validates the arguments for Checkout command.
+    /// </summary>
+    /// <param name="args">Arguments provided.</param>
+    private static void ValidateCheckoutCommand(string[] args)
+    {
+        if (args.Length is < 1 or > 4)
+        {
+            Utils.ExitWithError("Invalid number of arguments for checkout.");
+        }
+    }
+    
+    
 
     /// <summary>
     /// Helper function that gets all existing branches and marks the active

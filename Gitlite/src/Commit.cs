@@ -102,15 +102,6 @@ public class Commit
         Utils.ValidateFile(path);
         byte[] commitAsByte = Utils.ReadContentsAsBytes(path);
         return MessagePackSerializer.Deserialize<Commit>(commitAsByte);
-
-        // if (name != null)
-        // {
-        //     path = Path.Combine(path, name);
-        // }
-        //
-        // Utils.ValidateFile(path);
-        // byte[] byteValue = Utils.ReadContentsAsBytes(path);
-        // return MessagePackSerializer.Deserialize<Commit>(byteValue);
     }
 
     public static Commit GetHeadCommit()
