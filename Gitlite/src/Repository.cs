@@ -190,12 +190,19 @@ public class Repository
     /// </summary>
     public static void GlobalLog()
     {
-        string[] commits = Directory.GetFiles(COMMITS_DIR.ToString());
-        foreach (string commitHash in commits)
+        
+        string[] commitsDir = Directory.GetDirectories(COMMITS_DIR.ToString());
+        foreach (var dir in commitsDir)
         {
-            Commit commit = Gitlite.Commit.Deserialize(commitHash);
-            Console.WriteLine("===");
-            Console.WriteLine(commit);
+            foreach (var commitHash in Directory.GetFiles(dir).Select(Path.GetFileName))
+            {
+                Commit commit = Gitlite.Commit.Deserialize(commitHash, dir);
+                Console.WriteLine("===");
+                Console.WriteLine(commit);
+            }
+
+            Directory.GetFiles(dir);
+               
         }
     }
 

@@ -4,9 +4,8 @@ using MessagePack;
 namespace Gitlite;
 
 /*
- * BUG: When writing a commit for the first time, we have to first create the
- * BUG: commit hash's first two digit directory.
- *
+ * TODO: Refactor CreateCommit method and reduce overloading
+ * TODO: by using optional arguments instead.
  * 
  */
 
@@ -87,10 +86,19 @@ public class Commit
         return CreateCommit("initial commit", unixEpoch, null);
     }
 
-    public static Commit Deserialize(string hash)
+    public static Commit Deserialize(string hash, string? dirPath = null)
     {
-        var (firstTwoDigits, rest) = Utils.SplitHashPath(hash);
-        string path = Path.Combine(Repository.COMMITS_DIR.ToString(), firstTwoDigits, rest);
+        string path;
+        if (dirPath == null)
+        {
+            var (firstTwoDigits, rest) = Utils.SplitHashPath(hash);
+            path = Path.Combine(Repository.COMMITS_DIR.ToString(), firstTwoDigits, rest);
+        }
+        else
+        {
+            path = Path.Combine(dirPath, hash);
+        }
+        
         Utils.ValidateFile(path);
         byte[] commitAsByte = Utils.ReadContentsAsBytes(path);
         return MessagePackSerializer.Deserialize<Commit>(commitAsByte);

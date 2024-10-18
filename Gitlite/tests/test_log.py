@@ -11,7 +11,6 @@ def test_log(setup_and_cleanup):
         utils.run_gitlite_cmd(["commit", messages[i]])
         
     stdout, returncode = utils.run_gitlite_cmd("log")
-    print(stdout)
     assert returncode == 0
     
     for i in range(len(messages)):
@@ -26,7 +25,8 @@ def test_global_log(setup_and_cleanup):
         utils.run_gitlite_cmd("add hello")
         utils.run_gitlite_cmd(["commit", messages[i]])
 
-    stdout, returncode = utils.run_gitlite_cmd("global-log")
+    stdout, stderr, returncode = utils.run_gitlite_cmd("global-log", stderr=True)
+    print(stderr)
     assert returncode == 0
 
     for i in range(len(messages)):
