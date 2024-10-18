@@ -2,19 +2,27 @@ namespace Gitlite;
 
 public static class Blob
 {
+    
     /// <summary>
     /// Saves CONTENTS as a blob file.
     /// </summary>
     /// <param name="contents">Contents to write as blob.</param>
-    /// <returns>The hash value of CONTENTS.</returns>
-    public static string SaveAsBlob(byte[] contents)
+    /// <param name="hash">Optional argument. The hash of CONTENTS.</param>
+    public static void SaveBlob(byte[] contents, string? hash = null)
     {
-        string hash = Utils.HashBytes(contents);
-        if (!File.Exists(Path.Combine(Repository.BLOBS_DIR.ToString(), hash)))
+        if (hash == null)
         {
-            Utils.WriteContent(Path.Combine(Repository.BLOBS_DIR.ToString(), hash), contents);
+            hash = Utils.HashBytes(contents);
         }
-        return hash;
+        
+        var (firstTwoDigits, rest) = Utils.SplitHashPath(hash);
+        string path = Path.Combine(Repository.BLOBS_DIR.ToString(), firstTwoDigits);
+        Directory.CreateDirectory(path);
+        path = Path.Combine(path, rest);
+        if (!File.Exists(path))
+        {
+            Utils.WriteContent(path, contents);
+        }
     }
 
     /// <summary>
@@ -27,5 +35,18 @@ public static class Blob
     {
         byte[] otherFileContent = Utils.ReadContentsAsBytes(otherFile);
         return Utils.HashBytes(otherFileContent) == blobRef;
+    }
+
+    /// <summary>
+    /// Reads the content of a blob given its hash reference.
+    /// </summary>
+    /// <param name="blobRef">Hash reference of the blob.</param>
+    /// <returns>Content of the BLOB in string.</returns>
+    public static string ReadBlobContentAsString(string blobRef)
+    {
+        var (firstTwoDigits, rest) = Utils.SplitHashPath(blobRef);
+        string path = Path.Combine(Repository.BLOBS_DIR.ToString(), firstTwoDigits, rest);
+        byte[] bytes = Utils.ReadContentsAsBytes(path);
+        return System.Text.Encoding.UTF8.GetString(bytes);
     }
 }

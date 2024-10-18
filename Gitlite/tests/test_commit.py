@@ -26,7 +26,9 @@ def test_commit_single_file(setup_and_cleanup):
     """
     Tests committing a single file.
     """
-    with open(".gitlite/HEAD", "r") as file:
+    HEAD = os.path.join(".gitlite", "HEAD")
+    
+    with open(HEAD, "r") as file:
         hash_of_initial_commit = file.read().strip() 
     
     subprocess.run(["touch", "hello.txt"])
@@ -36,30 +38,33 @@ def test_commit_single_file(setup_and_cleanup):
     assert return_code == 0
     
     # HEAD pointer must be updated after committing.
-    with open(".gitlite/HEAD", "r") as file:
+    with open(HEAD, "r") as file:
         hash_of_new_commit = file.read().strip()
     
     assert hash_of_new_commit != hash_of_initial_commit
     
     # New commit object must exist on .gitlite/commits/
-    first_two_digits, rest = hash_of_new_commit[0:2], hash_of_new_commit[2:]
+    first_two_digits, rest = utils.split_hash(hash_of_new_commit)
     new_commit_path = os.path.join(".gitlite", "commits", first_two_digits, rest)
     assert os.path.exists(new_commit_path)
     
     # Master pointer must be updated
-    with open(".gitlite/branches/master", "r") as file:
+    with open(os.path.join(".gitlite", "branches", "master"), "r") as file:
         content = file.read().strip()
         assert hash_of_new_commit == content
     
     # Checking if the blob tracked by the new commit exists and has the correct content
     # "Gitlite read" serializes commits into json and prints them
     stdout, _ = utils.run_gitlite_cmd(f"read {hash_of_new_commit} commit")
-    blob = find_blob_from_commit(stdout, "hello.txt")
-    blob_path = f".gitlite/blobs/{blob[1]}"
-    assert os.path.exists(blob_path), "blob must be created for the added file"
+    blob_file_name, blob_hash_ref = find_blob_from_commit(stdout, "hello.txt")
+    first_two_digits, rest = utils.split_hash(blob_hash_ref)
+    # blob_path = f".gitlite/blobs/{blob_hash_ref}"
+    assert os.path.exists(os.path.join(".gitlite", "blobs", first_two_digits, rest)),\
+        "blob must be created for the added file"
+    
 
     # Blob must have the correct content of the added file
-    cmd = f"read {blob[1]} blob"
+    cmd = f"read {blob_hash_ref} blob"
     stdout, _ = utils.run_gitlite_cmd(cmd)
     assert "hello" in stdout
     

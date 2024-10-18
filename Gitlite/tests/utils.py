@@ -67,3 +67,11 @@ def create_file(name, content=""):
             subprocess.run(["touch", name[i]])
             subprocess.run([f"echo '{content[i]}' >> {name[i]}"])
         
+def split_hash(hash_ref):
+    """
+    Splits the hash to its first two digits but the rest, and the rest
+    :param hash_ref: hash reference to split
+    :return: Tuple (first two digits, rest)
+    """
+    
+    return hash_ref[:2], hash_ref[2:]

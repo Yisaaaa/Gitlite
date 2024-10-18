@@ -3,7 +3,9 @@ namespace Gitlite;
 /*
  * TODO: Refactor file structure. Adopt the hash table like datastructure
  * TODO: only that it is implemented with file system.
- * TODO: First thing to do is to update all things (e.g. methods) related to commit files.
+ * TODO (DONE): First thing to do is to update all things (e.g. methods) related to commit files.
+ * TODO: Refactor checking if directory exists when writing files.
+ * TODO: Update all things related to blobs
  * 
  * TODO: Update the design document brought by the changes of file structure refactoring.
  * TODO: Refactor overloaded methods in Commit.
@@ -76,7 +78,7 @@ public class Repository
         }
 
         forAddition[fileName] = contentHash;
-        Blob.SaveAsBlob(content);
+        Blob.SaveBlob(content);
         stagingArea.Save();
     }
 

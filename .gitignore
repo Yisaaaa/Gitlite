@@ -6,6 +6,7 @@
 # Temp testing files and directory
 Gitlite/tests/Gitlite
 Gitlite/tests/test_tmp_dir
+Gitlite/src/AdHocTest.cs
 
 # Python environment
 venv
