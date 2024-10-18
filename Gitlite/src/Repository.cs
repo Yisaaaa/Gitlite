@@ -1,14 +1,10 @@
 namespace Gitlite;
 
 /*
- * TODO: Refactor file structure. Adopt the hash table like datastructure
- * TODO: only that it is implemented with file system.
- * TODO (DONE): First thing to do is to update all things (e.g. methods) related to commit files.
- * TODO: Refactor checking if directory exists when writing files.
- * TODO: Update all things related to blobs
- * 
  * TODO: Update the design document brought by the changes of file structure refactoring.
  * TODO: Refactor overloaded methods in Commit.
+ *
+ * TODO: Do the Checkout command.
  */
 
 /// <summary>
@@ -190,9 +186,9 @@ public class Repository
     /// </summary>
     public static void GlobalLog()
     {
-        
-        string[] commitsDir = Directory.GetDirectories(COMMITS_DIR.ToString());
-        foreach (var dir in commitsDir)
+
+        string[] commitDirs = Directory.GetDirectories(COMMITS_DIR.ToString());
+        foreach (var dir in commitDirs)
         {
             foreach (var commitHash in Directory.GetFiles(dir).Select(Path.GetFileName))
             {
@@ -212,21 +208,25 @@ public class Repository
     /// <param name="commitMessage">The commit message of the commit being looked for.</param>
     public static void Find(string commitMessage)
     {
-        string[] commitHashRefs = Directory.GetFiles(COMMITS_DIR.ToString());
-        bool matchingCommitFound = false;
-        
-        foreach (string commitRef in commitHashRefs)
+        string[] dirs = Directory.GetDirectories(COMMITS_DIR.ToString());
+        bool matchFound = false;
+
+        foreach (var dir in dirs)
         {
-            Commit deserializedCommit = Gitlite.Commit.Deserialize(commitRef);
-            if (deserializedCommit?.LogMessage.ToLower().Contains(commitMessage.ToLower()) == true)
+            foreach (var commitHashRef in Directory.GetFiles(dir).Select(Path.GetFileName))
             {
-                Console.WriteLine("===");
-                Console.WriteLine(deserializedCommit);
-                matchingCommitFound = true;
+                Commit  commit = Gitlite.Commit.Deserialize(commitHashRef, dir);
+
+                if (commit.LogMessage.ToLower().Contains(commitMessage.ToLower()))
+                {
+                    Console.WriteLine("===");
+                    Console.WriteLine(commit);
+                    matchFound = true;
+                }
             }
         }
-
-        if (!matchingCommitFound)
+        
+        if (!matchFound)
         {
             Console.WriteLine("Found no commit with that message.");
         }
