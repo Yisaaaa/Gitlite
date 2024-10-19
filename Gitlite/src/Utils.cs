@@ -144,17 +144,21 @@ public static class Utils
         ExitWithError(message);
     }
     
-    public static void ValidateFile(string path, string? name = null)
+    public static void ValidateFile(string path, string? name = null, string? message = null)
     {
         if (name != null)
         {
             path = Path.Combine(path, name);
         }
 
-        if (!File.Exists(path))
+        if (File.Exists(path)) return;
+
+        if (string.IsNullOrEmpty(message))
         {
             throw new ArgumentException("Invalid file: ", path);
         }
+        
+        throw new ArgumentException(message);
     }
 
 

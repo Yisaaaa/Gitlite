@@ -99,10 +99,50 @@ public class Commit
             path = Path.Combine(dirPath, hash);
         }
         
-        Utils.ValidateFile(path);
+        Utils.ValidateFile(path, message:"Commit does not exist.");
         byte[] commitAsByte = Utils.ReadContentsAsBytes(path);
         return MessagePackSerializer.Deserialize<Commit>(commitAsByte);
+        
     }
+    
+    public static Commit DeserializeShortHash(string hash)
+    {
+        if (hash.Length < 6)
+        {
+            Utils.ExitWithError("Short hash must at least be 6 characters long.");
+        }
+
+        string matchingHash = FindCompleteHash(hash);
+
+        if (matchingHash == null)
+        {
+            Utils.ExitWithError("No commit found with the given hash.");
+        }
+        
+        byte[] commitAsByte = Utils.ReadContentsAsBytes(matchingHash);
+        return MessagePackSerializer.Deserialize<Commit>(commitAsByte);
+
+    }
+
+
+    private static string? FindCompleteHash(string shortHash)
+    {
+        var (firstTwoDigits, rest) = Utils.SplitHashPath(shortHash);
+        string dirPath = Path.Combine(Repository.COMMITS_DIR.ToString(), firstTwoDigits);
+
+        if (!Directory.Exists(dirPath)) return null;
+        
+        string[] files = Directory.GetFiles(dirPath);
+        foreach (var file in files)
+        {
+            if (file.StartsWith(rest))
+            {
+                return file;
+            }
+        }
+
+        return null;
+    } 
 
     public static Commit GetHeadCommit()
     {

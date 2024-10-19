@@ -334,21 +334,56 @@ public class Repository
 
         if (args.Length == 3)
         {
-            if (args[1] != "--") Utils.ExitWithError("Invalid arguments specified.");
-            CheckoutWithFile(args[2]);
+            ValidateCheckoutSeparator(args, 1);
+            CheckoutWithFileAndCommit(args[2]);
+        } else if (args.Length == 4)
+        {
+            ValidateCheckoutSeparator(args, 2);
+            CheckoutWithFileAndCommitId(args[3], args[1]);
         }
     }
 
-    private static void CheckoutWithFile(string filename)
+    private static void ValidateCheckoutSeparator(string[] args, int index)
     {
-        Commit headCommit = Gitlite.Commit.GetHeadCommit();
-        if (!headCommit.FileMapping.ContainsKey(filename))
+        if (args[index] != "--")
+        {
+            Utils.ExitWithError("Invalid arguments specified.");
+        }
+    }
+
+    /// <summary>
+    /// Takes the version of the file in the head commit and puts it in the working directory,
+    /// overwriting the file there if it exists. Does not stage the new file.
+    /// </summary>
+    /// <param name="commit">Commit</param>
+    /// <param name="filename">Name of the file.</param>
+    private static void CheckoutWithFileAndCommit(string filename, Commit? commit = null)
+    {
+        if (commit == null)
+        {
+            commit = Gitlite.Commit.GetHeadCommit();    
+        }
+        
+        if (!commit.FileMapping.ContainsKey(filename))
         {
             Utils.ExitWithError("File does not exists in the current commit.");
         }
         
-        string fileContentInHeadCommit = Blob.ReadBlobContentAsString(headCommit.FileMapping[filename]);
+        string fileContentInHeadCommit = Blob.ReadBlobContentAsString(commit.FileMapping[filename]);
         Utils.WriteContent(filename, fileContentInHeadCommit);
+    }
+
+    /// <summary>
+    /// Takes the version of the file in the commit with the given id and puts it in
+    /// the working directory, overwriting the file there if it exists. Does not stage the
+    /// new file.
+    /// </summary>
+    /// <param name="filename">Name of the file.</param>
+    /// <param name="commitId">Commit hash id.</param>
+    private static void CheckoutWithFileAndCommitId(string filename, string commitId)
+    {
+        Commit commit = Gitlite.Commit.DeserializeShortHash(commitId);
+        CheckoutWithFileAndCommit(filename, commit);
     }
     
     /// <summary>
@@ -362,8 +397,6 @@ public class Repository
             Utils.ExitWithError("Invalid number of arguments for checkout.");
         }
     }
-    
-    
 
     /// <summary>
     /// Helper function that gets all existing branches and marks the active
