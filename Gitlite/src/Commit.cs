@@ -86,47 +86,35 @@ public class Commit
         return CreateCommit("initial commit", unixEpoch, null);
     }
 
-    public static Commit Deserialize(string hash, string? dirPath = null)
+    public static Commit Deserialize(string hash, bool completeForm = true, string? errorMessage = null)
     {
         string path;
-        if (dirPath == null)
+
+        if (!completeForm)
         {
-            var (firstTwoDigits, rest) = Utils.SplitHashPath(hash);
-            path = Path.Combine(Repository.COMMITS_DIR.ToString(), firstTwoDigits, rest);
+            hash = FindCompleteHash(hash);
+            if (hash == null)
+            {
+                Utils.ExitWithError(errorMessage);
+            }
         }
-        else
-        {
-            path = Path.Combine(dirPath, hash);
-        }
+            
+        var (firstTwoDigits, rest) = Utils.SplitHashPath(hash);
+        path = Path.Combine(Repository.COMMITS_DIR.ToString(), firstTwoDigits, rest);
         
-        Utils.ValidateFile(path, message:"Commit does not exist.");
+        Utils.ValidateFile(path, message:errorMessage);
         byte[] commitAsByte = Utils.ReadContentsAsBytes(path);
-        return MessagePackSerializer.Deserialize<Commit>(commitAsByte);
         
-    }
-    
-    public static Commit DeserializeShortHash(string hash)
-    {
-        if (hash.Length < 6)
-        {
-            Utils.ExitWithError("Short hash must at least be 6 characters long.");
-        }
-
-        string matchingHash = FindCompleteHash(hash);
-
-        if (matchingHash == null)
-        {
-            Utils.ExitWithError("No commit found with the given hash.");
-        }
-        
-        byte[] commitAsByte = Utils.ReadContentsAsBytes(matchingHash);
         return MessagePackSerializer.Deserialize<Commit>(commitAsByte);
-
     }
-
 
     private static string? FindCompleteHash(string shortHash)
     {
+        if (shortHash.Length < 6)
+        {
+            Utils.ExitWithError("Short hash must at least be 6 characters long.");
+        }
+        
         var (firstTwoDigits, rest) = Utils.SplitHashPath(shortHash);
         string dirPath = Path.Combine(Repository.COMMITS_DIR.ToString(), firstTwoDigits);
 

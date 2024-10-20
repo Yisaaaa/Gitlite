@@ -5,6 +5,8 @@ namespace Gitlite;
  * TODO: Refactor overloaded methods in Commit.
  *
  * TODO: Do the Checkout command.
+ * TODO: I wanna refactor the ValidateFile command to accomodate short hash id
+ * TODO: instead of another method for checking.
  */
 
 /// <summary>
@@ -190,9 +192,9 @@ public class Repository
         string[] commitDirs = Directory.GetDirectories(COMMITS_DIR.ToString());
         foreach (var dir in commitDirs)
         {
-            foreach (var commitHash in Directory.GetFiles(dir).Select(Path.GetFileName))
+            foreach (string commitHash in Directory.GetFiles(dir).Select(Path.GetFileName))
             {
-                Commit commit = Gitlite.Commit.Deserialize(commitHash, dir);
+                Commit commit = Gitlite.Commit.Deserialize(Path.GetFileName(dir) + commitHash);
                 Console.WriteLine("===");
                 Console.WriteLine(commit);
             }
@@ -215,7 +217,7 @@ public class Repository
         {
             foreach (var commitHashRef in Directory.GetFiles(dir).Select(Path.GetFileName))
             {
-                Commit  commit = Gitlite.Commit.Deserialize(commitHashRef, dir);
+                Commit  commit = Gitlite.Commit.Deserialize(Path.GetFileName(dir) + commitHashRef);
 
                 if (commit.LogMessage.ToLower().Contains(commitMessage.ToLower()))
                 {
@@ -339,7 +341,7 @@ public class Repository
         } else if (args.Length == 4)
         {
             ValidateCheckoutSeparator(args, 2);
-            CheckoutWithFileAndCommitId(args[3], args[1]);
+            CheckoutWithFileAndCommit(args[3], args[1]);
         }
     }
 
@@ -357,11 +359,16 @@ public class Repository
     /// </summary>
     /// <param name="commit">Commit</param>
     /// <param name="filename">Name of the file.</param>
-    private static void CheckoutWithFileAndCommit(string filename, Commit? commit = null)
+    private static void CheckoutWithFileAndCommit(string filename, string commitId = "")
     {
-        if (commit == null)
+        Commit commit;
+        if (commitId == "")
         {
             commit = Gitlite.Commit.GetHeadCommit();    
+        }
+        else
+        {
+            commit = Gitlite.Commit.Deserialize(commitId, completeForm:false);
         }
         
         if (!commit.FileMapping.ContainsKey(filename))
@@ -371,19 +378,6 @@ public class Repository
         
         string fileContentInHeadCommit = Blob.ReadBlobContentAsString(commit.FileMapping[filename]);
         Utils.WriteContent(filename, fileContentInHeadCommit);
-    }
-
-    /// <summary>
-    /// Takes the version of the file in the commit with the given id and puts it in
-    /// the working directory, overwriting the file there if it exists. Does not stage the
-    /// new file.
-    /// </summary>
-    /// <param name="filename">Name of the file.</param>
-    /// <param name="commitId">Commit hash id.</param>
-    private static void CheckoutWithFileAndCommitId(string filename, string commitId)
-    {
-        Commit commit = Gitlite.Commit.DeserializeShortHash(commitId);
-        CheckoutWithFileAndCommit(filename, commit);
     }
     
     /// <summary>
