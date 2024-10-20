@@ -98,7 +98,7 @@ public class Commit
                 Utils.ExitWithError(errorMessage);
             }
         }
-            
+
         var (firstTwoDigits, rest) = Utils.SplitHashPath(hash);
         path = Path.Combine(Repository.COMMITS_DIR.ToString(), firstTwoDigits, rest);
         
@@ -110,9 +110,9 @@ public class Commit
 
     private static string? FindCompleteHash(string shortHash)
     {
-        if (shortHash.Length < 6)
+        if (shortHash.Length < 5)
         {
-            Utils.ExitWithError("Short hash must at least be 6 characters long.");
+            Utils.ExitWithError("Short hash must at least be 5 characters long.");
         }
         
         var (firstTwoDigits, rest) = Utils.SplitHashPath(shortHash);
@@ -120,16 +120,28 @@ public class Commit
 
         if (!Directory.Exists(dirPath)) return null;
         
-        string[] files = Directory.GetFiles(dirPath);
+        var files = Directory.GetFiles(dirPath).Select(Path.GetFileName);
+        List<string> matchingHashes = new List<string>();
+        
         foreach (var file in files)
         {
             if (file.StartsWith(rest))
             {
-                return file;
+                matchingHashes.Add(file);
             }
         }
 
-        return null;
+        if (matchingHashes.Count == 0)
+        {
+            return null;
+        }
+
+        if (matchingHashes.Count > 1)
+        {
+            Utils.ExitWithError("Hash provided is not unique enough. Please provide a longer one.");
+        }
+        
+        return firstTwoDigits + matchingHashes[0];
     } 
 
     public static Commit GetHeadCommit()

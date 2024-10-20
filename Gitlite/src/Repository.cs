@@ -5,8 +5,7 @@ namespace Gitlite;
  * TODO: Refactor overloaded methods in Commit.
  *
  * TODO: Do the Checkout command.
- * TODO: I wanna refactor the ValidateFile command to accomodate short hash id
- * TODO: instead of another method for checking.
+ * TODO: Debug checkout a file with commit id
  */
 
 /// <summary>
@@ -368,13 +367,15 @@ public class Repository
         }
         else
         {
-            commit = Gitlite.Commit.Deserialize(commitId, completeForm:false);
+            commit = Gitlite.Commit.Deserialize(commitId, completeForm:false, "No commit with that id exists.");
         }
         
         if (!commit.FileMapping.ContainsKey(filename))
         {
-            Utils.ExitWithError("File does not exists in the current commit.");
+            Utils.ExitWithError("File does not exist in that commit.");
         }
+        
+        Console.WriteLine(commit.Hash);
         
         string fileContentInHeadCommit = Blob.ReadBlobContentAsString(commit.FileMapping[filename]);
         Utils.WriteContent(filename, fileContentInHeadCommit);
