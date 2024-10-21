@@ -19,7 +19,7 @@ public class Repository
     public static DirectoryInfo GITLITE_DIR = Utils.JoinDirectory(CWD, ".gitlite");
     public static DirectoryInfo COMMITS_DIR = Utils.JoinDirectory(GITLITE_DIR, "commits");
     public static DirectoryInfo BLOBS_DIR = Utils.JoinDirectory(GITLITE_DIR, "blobs");
-    private static DirectoryInfo BRANCHES = Utils.JoinDirectory(GITLITE_DIR, "branches");
+    public static DirectoryInfo BRANCHES = Utils.JoinDirectory(GITLITE_DIR, "branches");
     
     
     /* GITLITE MAIN COMMANDS */
@@ -39,7 +39,7 @@ public class Repository
         CreateDirs();
         
         string hash = Gitlite.Commit.CreateInitialCommit();
-        CreateBranch("master", hash);
+        Branch.CreateBranch("master", hash);
         Utils.WriteContent(Path.Combine(GITLITE_DIR.ToString(), "HEAD"), hash);
         
         Console.WriteLine($"Initialized a new GitLite at {CWD.ToString()}");
@@ -282,9 +282,9 @@ public class Repository
         
         // Display all branches
         Console.WriteLine("=== Branches ===");
-        foreach (var branch in GetExistingBranches())
+        foreach (var branch in Branch.GetExistingBranches())
         {
-            if (IsCurrentBranch(branch))
+            if (Branch.IsCurrentBranch(branch))
             {
                 Console.WriteLine("*" + branch);
             } else Console.WriteLine(branch);
@@ -331,16 +331,21 @@ public class Repository
 
     public static void Checkout(string[] args)
     {
-        ValidateCheckoutCommand(args);
-
         if (args.Length == 3)
-        {
+        { // Checkout a file from the current commit
             ValidateCheckoutSeparator(args, 1);
             CheckoutWithFileAndCommit(args[2]);
         } else if (args.Length == 4)
-        {
+        { // Checkout a file from the given commit id
             ValidateCheckoutSeparator(args, 2);
             CheckoutWithFileAndCommit(args[3], args[1]);
+        } else if (args.Length == 2)
+        { // Checkout all files from the given branch
+            CheckoutWithBranch(args[1]);
+        }
+        else
+        {
+            Utils.ExitWithError("Invalid number of arguments for checkout.");
         }
     }
 
@@ -356,7 +361,7 @@ public class Repository
     /// Takes the version of the file in the head commit and puts it in the working directory,
     /// overwriting the file there if it exists. Does not stage the new file.
     /// </summary>
-    /// <param name="commit">Commit</param>
+    /// <param name="commitId">Commit id of the commit to checkout from.</param>
     /// <param name="filename">Name of the file.</param>
     private static void CheckoutWithFileAndCommit(string filename, string commitId = "")
     {
@@ -380,52 +385,79 @@ public class Repository
         string fileContentInHeadCommit = Blob.ReadBlobContentAsString(commit.FileMapping[filename]);
         Utils.WriteContent(filename, fileContentInHeadCommit);
     }
-    
-    /// <summary>
-    /// Validates the arguments for Checkout command.
-    /// </summary>
-    /// <param name="args">Arguments provided.</param>
-    private static void ValidateCheckoutCommand(string[] args)
+
+    private static void CheckoutWithBranch(string branchName)
     {
-        if (args.Length is < 1 or > 4)
+        string branchPath = Path.Combine(CWD.ToString(), branchName);
+        if (!File.Exists(branchPath))
         {
-            Utils.ExitWithError("Invalid number of arguments for checkout.");
+            Utils.ExitWithError("No such branch exists.");
+        } else if (Branch.IsCurrentBranch(branchName))
+        {
+            Utils.ExitWithError("No need to checkout the current branch.");
         }
-    }
-
-    /// <summary>
-    /// Helper function that gets all existing branches and marks the active
-    /// branch with '*'
-    /// </summary>
-    /// <returns>A string[] of all branches</returns>
-    private static string[] GetExistingBranches()
-    {
-        string[] branches = Utils.GetFilesSorted(BRANCHES.ToString());
-        return branches;
-    }
-
-    /// <summary>
-    /// Checks if given BRANCH is the active branch
-    /// </summary>
-    /// <param name="branch">Branch name</param>
-    /// <returns>A boolean value if BRANCH is active</returns>
-    private static bool IsCurrentBranch(string branch)
-    {
-        string HEADhash = Utils.ReadContentsAsString(GITLITE_DIR.ToString(), "HEAD");
-        string branchHash = Utils.ReadContentsAsString(BRANCHES.ToString(), branch);
-
-        return HEADhash == branchHash;
-    }
-
-    /// <summary>
-    /// Creates a GitLite branch.
-    /// </summary>
-    /// <param name="name">Name of the branch</param>
-    /// <param name="commitHashRef">Commit hash reference that the branch points to</param>
-    private static void CreateBranch(string name, string commitHashRef)
-    {
-        string branch = Path.Combine(BRANCHES.ToString(), name);
-        Utils.WriteContent(branch, commitHashRef);
+        
+        StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
+        Commit headCommit = Gitlite.Commit.GetHeadCommit();
+        
+        // latest commit in the branch to checkout
+        Commit branchToCheckout = Gitlite.Commit.Deserialize(Utils.ReadContentsAsString(branchPath));
+        
+        foreach (var file in Directory.GetFiles(CWD.ToString()))
+        {   // An untracked file exists in the current branch.
+            if (!stagingArea.GetStagingForAddition().ContainsKey(file) && !headCommit.FileMapping.ContainsKey(file))
+            {
+                Utils.ExitWithError("There is an untracked file in the way; delete it, or add and commit it first.");
+            }
+        }
+        
+        /* How will this work?
+         * 
+         * Okay, So checking out a branch will mean overwriting all the file from the
+         * latest commit of that branch into the working directory. Any files that are in the
+         * current branch but not in the checked-out branch are deleted.
+         *
+         * We know that before we even get to this point, there must be no untracked files in
+         * the working directory.
+         *
+         * So in other words, iterating over the working directory at this point means
+         * also iterating over all the mapped files in the current branch commit.
+         *
+         * But why does it matter though?
+         *
+         * Remember that we will delete all files in the working directory that are not tracked in the checked-out
+         * branch commit. One implementation is that we will iterate over all files in the checked-out branch
+         * commit and put them in the working directory. Then just iterate over the working dir
+         * and remove the necessary files.
+         *
+         * Two things to take note of:
+         *      1. There may be some files that are in the current branch commit or working
+         *         dir but not in the checked-out branch commit.
+         * 
+         *      2. There may be some files that are in the checked-out branch commit but
+         *         are not in the working directory.
+         *
+         */
+    
+        // Writing files from the checked-out branch commit to the working directory 
+        foreach (var file in branchToCheckout.FileMapping)
+        {
+            string content = Blob.ReadBlobContentAsString(file.Value);
+            Utils.WriteContent(Path.Combine(CWD.ToString(), file.Key), content);
+        }
+        
+        // Removing files not present in the checked-out branch commit
+        foreach (var file in Directory.GetFiles(CWD.ToString()))
+        {
+            if (!branchToCheckout.FileMapping.ContainsKey(file))
+            {
+                File.Delete(file);
+            }
+        }
+        
+        // Update HEAD pointer and clear the staging area
+        Utils.WriteContent(Path.Combine(GITLITE_DIR.ToString(), "HEAD"), branchToCheckout.Hash);
+        stagingArea.Clear();
     }
 
     /// <summary>
