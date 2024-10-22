@@ -4,7 +4,10 @@ namespace Gitlite;
  * TODO: Update the design document brought by the changes of file structure refactoring.
  * TODO: Refactor overloaded methods in Commit.
  *
- * TODO: Do the Checkout command.
+ * TODO: Fix BUGSSS. Log is failing idk. ParentHashRef!!
+ * TODO: Refactor the HEAD file to reference a branch instead of a commit hash.
+ * TODO: Do the branch command.
+ * TODO: Do the Checkout command (Do branch first to finish).
  * TODO: Debug checkout a file with commit id
  */
 
@@ -178,6 +181,7 @@ public class Repository
             {
                 return;
             }
+            Console.WriteLine("PArent: " + commit.ParentHashRef);
             
             // Get the parent commit
             Commit? parent = Gitlite.Commit.Deserialize(commit.ParentHashRef);
@@ -332,6 +336,21 @@ public class Repository
         }
     }
 
+    /// <summary>
+    /// Has three possible use cases:
+    /// 1. checkout -- [filename]
+    ///         - checks out a file from the head commit, overwriting the one in the
+    ///           working directory.
+    /// 2. checkout [commit id] -- [filename]
+    ///         - checks out a file from a commit given its id, overwriting the one in the
+    ///           working directory.
+    /// 3. checkout [branch name]
+    ///         - checks out all file from the commit at the head of the given branch,
+    ///           overwriting the files that are already there and deleting the files not
+    ///           in the head of the checked-out branch.
+    ///                           
+    /// </summary>
+    /// <param name="args"></param>
     public static void Checkout(string[] args)
     {
         if (args.Length == 3)
@@ -351,6 +370,17 @@ public class Repository
             Utils.ExitWithError("Invalid number of arguments for checkout.");
         }
     }
+
+    public static void Branch(string branchName)
+    {
+        if (File.Exists(Path.Combine(BRANCHES.ToString(), branchName)))
+        {
+            Utils.ExitWithError("A branch with that name already exists.");
+        }
+        
+        Gitlite.Branch.CreateBranch(branchName, Utils.ReadContentsAsString(Path.Combine(GITLITE_DIR.ToString(), "HEAD")));
+    }
+    
 
     private static void ValidateCheckoutSeparator(string[] args, int index)
     {
