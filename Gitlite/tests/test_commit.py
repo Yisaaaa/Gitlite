@@ -26,7 +26,7 @@ def test_commit_single_file(setup_and_cleanup):
     """
     Tests committing a single file.
     """
-    HEAD = os.path.join(".gitlite", "HEAD")
+    HEAD = os.path.join(".gitlite", "branches", "master")
     
     with open(HEAD, "r") as file:
         hash_of_initial_commit = file.read().strip() 
@@ -79,7 +79,7 @@ def test_two_files_same_content(setup_and_cleanup):
     utils.run_gitlite_cmd("add b.txt")
     utils.run_gitlite_cmd(["commit", "a commit"])
 
-    with open(".gitlite/HEAD", "r") as file:
+    with open(os.path.join(".gitlite", "branches", "master"), "r") as file:
         hash_of_new_commit = file.read().strip()
     
     stdout, _ = utils.run_gitlite_cmd(f"read {hash_of_new_commit} commit")

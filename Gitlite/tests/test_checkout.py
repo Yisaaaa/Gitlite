@@ -23,8 +23,8 @@ def test_checkout_file_failure_cases(setup_and_cleanup):
     """
     Tests on the failure cases of checkout. Basically, checking out a non-existent file
     or file on a non-existent commit is not allowed. Commit ids must also be >= to 5
-    hexadecimal characters. In theory, it can be a little less than that (> 2 at least)
-    but otherwise it would not be unique enough and this is but a design decision I made.
+    hexadecimal characters. In theory, it can be a little less than that (> 2 at least),
+    but in that case, it would not be unique enough and this is but a design decision I made.
     """
     utils.create_file("test.txt")
     utils.run_gitlite_cmd("add test.txt")
