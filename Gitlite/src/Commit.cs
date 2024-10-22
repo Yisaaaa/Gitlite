@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using MessagePack;
     
 namespace Gitlite;
@@ -18,16 +17,14 @@ public class Commit
     [Key(0)] public string LogMessage { get; set; }
     [Key(1)] public DateTime Timestamp { get; set; }
     [Key(2)] public Dictionary<string, string> FileMapping { get; set; }
-    [Key(3)] public string Branch { get; set; }
-    [Key(4)] public string? ParentHashRef { get; set; }
-    [Key(5)] public string Hash { get; set; }
+    [Key(3)] public string? ParentHashRef { get; set; }
+    [Key(4)] public string Hash { get; set; }
 
-    public Commit(string logMessage, DateTime timestamp, Dictionary<string, string> fileMapping, string branch, string? parentHashRef)
+    public Commit(string logMessage, DateTime timestamp, Dictionary<string, string> fileMapping, string? parentHashRef)
     {
         this.LogMessage = logMessage;
         this.Timestamp = timestamp;
         this.FileMapping = fileMapping;
-        this.Branch = branch;
         this.ParentHashRef = parentHashRef;
     }
 
@@ -40,7 +37,7 @@ public class Commit
     {
         DateTime timestamp = DateTime.Now;
         Dictionary<string, string> fileMapping = new Dictionary<string, string>();
-        return CreateCommit(logMessage, timestamp, fileMapping, "master", parentHashRef);
+        return CreateCommit(logMessage, timestamp, fileMapping, parentHashRef);
     }
 
     /// <summary>
@@ -53,12 +50,12 @@ public class Commit
     public static string CreateCommit(string logMessage, DateTime timestamp, string? parentHashRef)
     {
         Dictionary<string, string> fileMapping = new Dictionary<string, string>();
-        return CreateCommit(logMessage, timestamp, fileMapping, "master", parentHashRef);
+        return CreateCommit(logMessage, timestamp, fileMapping, parentHashRef);
     }
     
-    public static string CreateCommit(string logMessage, DateTime timestamp, Dictionary<string, string> fileMapping, string branch, string? parentHashRef)
+    public static string CreateCommit(string logMessage, DateTime timestamp, Dictionary<string, string> fileMapping, string? parentHashRef)
     {
-        Commit commit = new Commit(logMessage, timestamp, fileMapping, branch, parentHashRef);
+        Commit commit = new Commit(logMessage, timestamp, fileMapping, parentHashRef);
         string hash = GetHash(commit);
         commit.Hash = hash;
         byte[] serializedCommit = MessagePackSerializer.Serialize(commit);
@@ -146,9 +143,29 @@ public class Commit
 
     public static Commit GetHeadCommit()
     {
-        string hashRef = Utils.ReadContentsAsString(Repository.GITLITE_DIR.ToString(), "HEAD");
+        string hashRef = GetHeadCommitId();
         Commit commit = Deserialize(hashRef);
         return commit;
     }
-    
+
+    /// <summary>
+    /// Retrieves the commit ID referenced by the HEAD pointer.
+    /// </summary>
+    /// <returns>
+    /// A string representation of the commit ID
+    /// If head points to a branch, the latest commit ID of that branch is returned.
+    /// If head points to a commit ID already, returns the commit ID.
+    /// </returns>
+    public static string GetHeadCommitId()
+    {
+        string? branch = Branch.GetActiveBranch();
+
+        if (branch != null)
+        {
+            return Utils.ReadContentsAsString(Path.Combine(Repository.BRANCHES.ToString(), branch));
+        }
+        
+        return Utils.ReadContentsAsString(Path.Combine(Repository.GITLITE_DIR.ToString(), "HEAD"));
+    }
+
 }

@@ -39,10 +39,10 @@ public class Repository
         CreateDirs();
         
         string hash = Gitlite.Commit.CreateInitialCommit();
-        Branch.CreateBranch("master", hash);
-        Utils.WriteContent(Path.Combine(GITLITE_DIR.ToString(), "HEAD"), hash);
+        Gitlite.Branch.CreateBranch("master", hash);
+        Utils.WriteContent(Path.Combine(GITLITE_DIR.ToString(), "HEAD"), "ref: master");
         
-        Console.WriteLine($"Initialized a new GitLite at {CWD.ToString()}");
+        Console.WriteLine($"Initialized a new GitLite at {CWD}");
     }
     
     public static void Add(string fileName)
@@ -114,12 +114,15 @@ public class Repository
         stagingArea.Save();
         
         // Create and save the new commit
-        string parent = Utils.ReadContentsAsString(GITLITE_DIR.ToString(), "HEAD");
-        string hashRef = Gitlite.Commit.CreateCommit(logMessage, DateTime.Now, fileMapping, commitOnHEAD.Branch, parent);
+        string parent = Gitlite.Commit.GetHeadCommitId();
+        string hashRef = Gitlite.Commit.CreateCommit(logMessage, DateTime.Now, fileMapping, parent);
         
-        // Update HEAD and branch pointer
-        Utils.WriteContent(Path.Combine(GITLITE_DIR.ToString(), "HEAD"), hashRef);
-        Utils.WriteContent(Path.Combine(BRANCHES.ToString(), commitOnHEAD.Branch), hashRef);
+        // Update branch pointer, only if we are in a branch.
+        string branch = Gitlite.Branch.GetActiveBranch();
+        if (branch != null)
+        {
+            Utils.WriteContent(Path.Combine(BRANCHES.ToString(), branch), hashRef);
+        }
         
     }
 
@@ -282,9 +285,9 @@ public class Repository
         
         // Display all branches
         Console.WriteLine("=== Branches ===");
-        foreach (var branch in Branch.GetExistingBranches())
+        foreach (var branch in Gitlite.Branch.GetExistingBranches())
         {
-            if (Branch.IsCurrentBranch(branch))
+            if (Gitlite.Branch.IsCurrentBranch(branch))
             {
                 Console.WriteLine("*" + branch);
             } else Console.WriteLine(branch);
@@ -392,7 +395,7 @@ public class Repository
         if (!File.Exists(branchPath))
         {
             Utils.ExitWithError("No such branch exists.");
-        } else if (Branch.IsCurrentBranch(branchName))
+        } else if (Gitlite.Branch.IsCurrentBranch(branchName))
         {
             Utils.ExitWithError("No need to checkout the current branch.");
         }
@@ -411,34 +414,6 @@ public class Repository
             }
         }
         
-        /* How will this work?
-         * 
-         * Okay, So checking out a branch will mean overwriting all the file from the
-         * latest commit of that branch into the working directory. Any files that are in the
-         * current branch but not in the checked-out branch are deleted.
-         *
-         * We know that before we even get to this point, there must be no untracked files in
-         * the working directory.
-         *
-         * So in other words, iterating over the working directory at this point means
-         * also iterating over all the mapped files in the current branch commit.
-         *
-         * But why does it matter though?
-         *
-         * Remember that we will delete all files in the working directory that are not tracked in the checked-out
-         * branch commit. One implementation is that we will iterate over all files in the checked-out branch
-         * commit and put them in the working directory. Then just iterate over the working dir
-         * and remove the necessary files.
-         *
-         * Two things to take note of:
-         *      1. There may be some files that are in the current branch commit or working
-         *         dir but not in the checked-out branch commit.
-         * 
-         *      2. There may be some files that are in the checked-out branch commit but
-         *         are not in the working directory.
-         *
-         */
-    
         // Writing files from the checked-out branch commit to the working directory 
         foreach (var file in branchToCheckout.FileMapping)
         {
@@ -456,7 +431,7 @@ public class Repository
         }
         
         // Update HEAD pointer and clear the staging area
-        Utils.WriteContent(Path.Combine(GITLITE_DIR.ToString(), "HEAD"), branchToCheckout.Hash);
+        Utils.WriteContent(Path.Combine(GITLITE_DIR.ToString(), "HEAD"), $"ref: {branchName}");
         stagingArea.Clear();
     }
 

@@ -32,9 +32,25 @@ public static class Branch
     /// <returns>A boolean value if BRANCH is active</returns>
     public static bool IsCurrentBranch(string branch)
     {
-        string HEADhash = Utils.ReadContentsAsString(Repository.GITLITE_DIR.ToString(), "HEAD");
+        string HEADhash = Commit.GetHeadCommitId();
         string branchHash = Utils.ReadContentsAsString(Repository.BRANCHES.ToString(), branch);
 
         return HEADhash == branchHash;
+    }
+
+    /// <summary>
+    /// Returns the name of the current active branch from the HEAD pointer.
+    /// </summary>
+    /// <returns>String name of the current active branch.</returns>
+    public static string? GetActiveBranch()
+    {
+        string head = Utils.ReadContentsAsString(Repository.GITLITE_DIR.ToString(), "HEAD");
+
+        if (head.StartsWith("ref: "))
+        {
+            return head.Split("ref: ")[1];
+        }
+
+        return null;
     }
 }

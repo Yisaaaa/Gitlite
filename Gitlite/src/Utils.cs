@@ -10,7 +10,8 @@ public static class Utils
     
     /* READING & WRITING */
     /// <summary>
-    /// Writes a single string content to a file.
+    /// Writes a string content to a file. The file will be overwritten if it exists
+    /// otherwise it will be created with the given string content.
     /// </summary>
     /// <param name="file">File name</param>
     /// <param name="content">Content to write into the file</param>
