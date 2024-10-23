@@ -1,3 +1,4 @@
+import os.path
 import subprocess
 import utils
 
@@ -73,6 +74,66 @@ def test_checkout_with_commit_id(setup_and_cleanup):
     
     with open("diary.txt", "r") as file:
         assert "I am the first, and will be the last!" in file.read()
+
+def test_checkout_a_branch(setup):
+    """
+    Tests checking out a branch. Must fail if the branch does not exist, if the branch to checkout
+    is the current branch, and if there is an untracked files on the current branch.
+    """
+    # Creating a branch
+    _, return_code = utils.run_gitlite_cmd("branch cool-beans")
+    assert return_code == 0
+    assert os.path.exists(os.path.join(".gitlite", "branches", "cool-beans"))
+
+    utils.create_file("wug.txt", "This is a wug.")
+
+    # Checking out with an untracked file in the current branch
+    stdout, stderr, return_code = utils.run_gitlite_cmd("checkout cool-beans", stderr=True)
+    assert "There is an untracked file in the way; delete it, or add and commit it first." in stdout
+    assert return_code != 0
+
+    utils.add_and_commit(["wug.txt"], "Is it a wug?")
+
+    # Creating a branch
+    _, return_code = utils.run_gitlite_cmd("branch wug-society")
+    assert return_code == 0
+    assert utils.read_file(os.path.join(".gitlite", "HEAD")) == "ref: master"
+    assert os.path.exists(os.path.join(".gitlite", "branches", "wug-society"))
+    assert utils.read_file(os.path.join(".gitlite", "branches", "wug-society")) == \
+           utils.read_file(os.path.join(".gitlite", "branches", "master"))
+
+    # Checking out a branch that doesn't exist.
+    stdout, return_code = utils.run_gitlite_cmd("checkout not-a-branch")
+    assert return_code != 0
+    assert "No such branch exists." in stdout
+
+    _, stderr, return_code = utils.run_gitlite_cmd("checkout wug-society", stderr=True)
+    assert return_code == 0
+
+    head = os.path.join(".gitlite", "HEAD")
+
+    assert utils.read_file(head) == "ref: wug-society",\
+        "HEAD must reference the new branch after checkout."
+
+    # Make a commit on the new branch
+    subprocess.run(["echo 'This is definitely a wug' > wug.txt"], shell=True)
+    utils.add_and_commit(["wug.txt"], "A real wug")
+
+    # Checkout back to the master branch
+    utils.run_gitlite_cmd("checkout master")
+    assert utils.read_file(head) == "ref: master",\
+        "HEAD must reference the master branch now."
+
+    assert utils.read_file("wug.txt") == "This is a wug.",\
+        "wug.txt must have the contents of the wug.txt before the commit in the new branch."
+
+    subprocess.run(["echo 'This is not a wug' > wug.txt"], shell=True)
+    utils.add_and_commit(["wug.txt"], "A fake wug")
+
+    # Checkout back to the new branch
+    utils.run_gitlite_cmd("checkout wug-society")
+    assert utils.read_file("wug.txt") == "This is definitely a wug",\
+        "wug.txt must have the contents of the wug.txt in the new branch"
     
 def get_commit_ids_from_log():
     """

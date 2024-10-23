@@ -1,6 +1,8 @@
 import os
 import subprocess
 import shutil
+from os import pathconf
+from tkinter.messagebox import RETRY
 
 test_dir = "test_tmp_dir"
 
@@ -75,3 +77,32 @@ def split_hash(hash_ref):
     """
     
     return hash_ref[:2], hash_ref[2:]
+
+def add_and_commit(files_to_add: list, commit_msg: str) -> None:
+    """
+    Adds the given files and make a commit with the given message.
+    :param files_to_add: Files to add.
+    :param commit_msg: Commit message
+    :return: None
+    """
+    assert isinstance(files_to_add, list), "files_to_add must be a list."
+    
+    for file in files_to_add:
+        
+        stdout, stderr, return_code = run_gitlite_cmd("add " + file, stderr=True)
+        if return_code != 0:
+            print(stdout, stderr)
+
+    stdout, stderr, return_code = run_gitlite_cmd(["commit", commit_msg], stderr=True)
+    if return_code != 0:
+        print("commit part")
+        print(stdout, stderr, return_code)
+    
+def read_file(filepath: str) -> str:
+    """
+    Reads a file given its file and retrieves its contents.
+    :param filepath: File path.  
+    :return: String contents of the file.
+    """
+    with open(filepath, "r") as file:
+        return file.read().strip()

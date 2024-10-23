@@ -4,11 +4,6 @@ namespace Gitlite;
  * TODO: Update the design document brought by the changes of file structure refactoring.
  * TODO: Refactor overloaded methods in Commit.
  *
- * TODO: Fix BUGSSS. Log is failing idk. ParentHashRef!!
- * TODO: Refactor the HEAD file to reference a branch instead of a commit hash.
- * TODO: Do the branch command.
- * TODO: Do the Checkout command (Do branch first to finish).
- * TODO: Debug checkout a file with commit id
  */
 
 /// <summary>
@@ -126,7 +121,6 @@ public class Repository
         {
             Utils.WriteContent(Path.Combine(BRANCHES.ToString(), branch), hashRef);
         }
-        
     }
 
     /// <summary>
@@ -181,7 +175,6 @@ public class Repository
             {
                 return;
             }
-            Console.WriteLine("PArent: " + commit.ParentHashRef);
             
             // Get the parent commit
             Commit? parent = Gitlite.Commit.Deserialize(commit.ParentHashRef);
@@ -378,7 +371,7 @@ public class Repository
             Utils.ExitWithError("A branch with that name already exists.");
         }
         
-        Gitlite.Branch.CreateBranch(branchName, Utils.ReadContentsAsString(Path.Combine(GITLITE_DIR.ToString(), "HEAD")));
+        Gitlite.Branch.CreateBranch(branchName, Gitlite.Commit.GetHeadCommitId());
     }
     
 
@@ -421,7 +414,7 @@ public class Repository
 
     private static void CheckoutWithBranch(string branchName)
     {
-        string branchPath = Path.Combine(CWD.ToString(), branchName);
+        string branchPath = Path.Combine(BRANCHES.ToString(), branchName);
         if (!File.Exists(branchPath))
         {
             Utils.ExitWithError("No such branch exists.");
@@ -436,9 +429,9 @@ public class Repository
         // latest commit in the branch to checkout
         Commit branchToCheckout = Gitlite.Commit.Deserialize(Utils.ReadContentsAsString(branchPath));
         
-        foreach (var file in Directory.GetFiles(CWD.ToString()))
+        foreach (var file in Directory.GetFiles(CWD.ToString()).Select(Path.GetFileName))
         {   // An untracked file exists in the current branch.
-            if (!stagingArea.GetStagingForAddition().ContainsKey(file) && !headCommit.FileMapping.ContainsKey(file))
+            if (!stagingArea.GetStagingForAddition().ContainsKey(file) && !headCommit.FileMapping.ContainsKey(file) && file != "Gitlite")
             {
                 Utils.ExitWithError("There is an untracked file in the way; delete it, or add and commit it first.");
             }
@@ -452,9 +445,9 @@ public class Repository
         }
         
         // Removing files not present in the checked-out branch commit
-        foreach (var file in Directory.GetFiles(CWD.ToString()))
+        foreach (var file in Directory.GetFiles(CWD.ToString()).Select(Path.GetFileName))
         {
-            if (!branchToCheckout.FileMapping.ContainsKey(file))
+            if (!branchToCheckout.FileMapping.ContainsKey(file) && file != "Gitlite")
             {
                 File.Delete(file);
             }
@@ -485,5 +478,4 @@ public class Repository
     {
         return GITLITE_DIR.Exists;
     }
-
 }

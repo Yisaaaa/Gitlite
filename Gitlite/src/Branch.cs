@@ -28,14 +28,13 @@ public static class Branch
     /// <summary>
     /// Checks if given BRANCH is the active branch
     /// </summary>
-    /// <param name="branch">Branch name</param>
+    /// <param name="branchName">Branch name</param>
     /// <returns>A boolean value if BRANCH is active</returns>
-    public static bool IsCurrentBranch(string branch)
+    public static bool IsCurrentBranch(string branchName)
     {
-        string HEADhash = Commit.GetHeadCommitId();
-        string branchHash = Utils.ReadContentsAsString(Repository.BRANCHES.ToString(), branch);
+        string head = Utils.ReadContentsAsString(Path.Combine(Repository.GITLITE_DIR.ToString(), "HEAD"));
 
-        return HEADhash == branchHash;
+        return head.Split("ref: ")[1] == branchName;
     }
 
     /// <summary>
