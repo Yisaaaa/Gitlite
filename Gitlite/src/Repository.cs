@@ -4,6 +4,7 @@ namespace Gitlite;
  * TODO: Update the design document brought by the changes of file structure refactoring.
  * TODO: Refactor overloaded methods in Commit.
  *
+ * TODO: Implement rm-branch
  */
 
 /// <summary>
@@ -364,6 +365,10 @@ public class Repository
         }
     }
 
+    /// <summary>
+    /// Creates a Gitlite branch with the given name.
+    /// </summary>
+    /// <param name="branchName">Name of the branch to be created.</param>
     public static void Branch(string branchName)
     {
         if (File.Exists(Path.Combine(BRANCHES.ToString(), branchName)))
@@ -372,6 +377,26 @@ public class Repository
         }
         
         Gitlite.Branch.CreateBranch(branchName, Gitlite.Commit.GetHeadCommitId());
+    }
+
+    /// <summary>
+    /// Deletes a branch given its name. A branch really is just a pointer to a commit node
+    /// and deleting a branch will just remove this pointer. It does not delete all the commits
+    /// created while in or under the branch.
+    /// </summary>
+    /// <param name="branchName">Name of the branch to delete.</param>
+    public static void RmBranch(string branchName)
+    {
+        string path = Path.Combine(BRANCHES.ToString(), branchName);
+        if (!File.Exists(path))
+        {
+            Utils.ExitWithError("A branch with that name does not exist.");
+        } else if (Gitlite.Branch.IsCurrentBranch(branchName))
+        {
+            Utils.ExitWithError("Cannot remove the current branch.");
+        }
+        
+        File.Delete(path);
     }
     
 

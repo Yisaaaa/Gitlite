@@ -77,6 +77,11 @@ public static class Program
                 Utils.ValidateArguments("branch", args, 2);
                 Repository.Branch(args[1]);
                 break;
+            
+            case "rm-branch":
+                Utils.ValidateArguments("rm-branch", args, 2);
+                Repository.RmBranch(args[1]);
+                break;
                 
             default:
                 Utils.ExitWithError($"No command with such name exists: {args[0]}");
