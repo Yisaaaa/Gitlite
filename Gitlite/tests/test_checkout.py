@@ -75,7 +75,7 @@ def test_checkout_with_commit_id(setup_and_cleanup):
     with open("diary.txt", "r") as file:
         assert "I am the first, and will be the last!" in file.read()
 
-def test_checkout_a_branch(setup):
+def test_checkout_a_branch(setup_and_cleanup):
     """
     Tests checking out a branch. Must fail if the branch does not exist, if the branch to checkout
     is the current branch, and if there is an untracked files on the current branch.
