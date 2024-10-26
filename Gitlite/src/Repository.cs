@@ -4,7 +4,7 @@ namespace Gitlite;
  * TODO: Update the design document brought by the changes of file structure refactoring.
  * TODO: Refactor overloaded methods in Commit.
  *
- * TODO: Implement rm-branch
+ * TODO: Implement reset
  */
 
 /// <summary>
@@ -453,13 +453,10 @@ public class Repository
         
         // latest commit in the branch to checkout
         Commit branchToCheckout = Gitlite.Commit.Deserialize(Utils.ReadContentsAsString(branchPath));
-        
-        foreach (var file in Directory.GetFiles(CWD.ToString()).Select(Path.GetFileName))
-        {   // An untracked file exists in the current branch.
-            if (!stagingArea.GetStagingForAddition().ContainsKey(file) && !headCommit.FileMapping.ContainsKey(file) && file != "Gitlite")
-            {
-                Utils.ExitWithError("There is an untracked file in the way; delete it, or add and commit it first.");
-            }
+
+        if (IsThereUntrackedFile(stagingArea, headCommit))
+        {
+            Utils.ExitWithError("There is an untracked file in the way; delete it, or add and commit it first.");
         }
         
         // Writing files from the checked-out branch commit to the working directory 
@@ -502,5 +499,34 @@ public class Repository
     public static bool GitliteAlreadyInitialized()
     {
         return GITLITE_DIR.Exists;
+    }
+
+    /// <summary>
+    /// Checks if there is an untracked file/s in the working directory.
+    /// </summary>
+    /// <param name="stagingArea">Staging area object.</param>
+    /// <param name="head">HEAD commit object.</param>
+    /// <returns>True if there is an untracked file/s and false otherwise.</returns>
+    private static bool IsThereUntrackedFile(StagingArea? stagingArea = null, Commit? head = null)
+    {
+        if (stagingArea == null)
+        {
+            stagingArea = StagingArea.GetDeserializedStagingArea();
+        }
+
+        if (head == null)
+        {
+            head = Gitlite.Commit.GetHeadCommit();
+        }
+        
+        foreach (var file in Directory.GetFiles(CWD.ToString()).Select(Path.GetFileName))
+        {   // An untracked file exists in the current branch.
+            if (!stagingArea.GetStagingForAddition().ContainsKey(file) && !head.FileMapping.ContainsKey(file) && file != "Gitlite")
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
