@@ -1,8 +1,6 @@
 import os
 import subprocess
 import shutil
-from os import pathconf
-from tkinter.messagebox import RETRY
 
 test_dir = "test_tmp_dir"
 

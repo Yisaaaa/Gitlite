@@ -1,7 +1,4 @@
-using System.Diagnostics;
-using System.Reflection.Metadata.Ecma335;
 using System.Security.Cryptography;
-using static Gitlite.Repository;
 
 namespace Gitlite;
 
