@@ -467,13 +467,7 @@ public class Repository
         }
         
         // Removing files not present in the checked-out branch commit
-        foreach (var file in Directory.GetFiles(CWD.ToString()).Select(Path.GetFileName))
-        {
-            if (!branchToCheckout.FileMapping.ContainsKey(file) && file != "Gitlite")
-            {
-                File.Delete(file);
-            }
-        }
+        RemoveFilesNotInFileMappingInCwd(branchToCheckout.FileMapping);
         
         // Update HEAD pointer and clear the staging area
         Utils.WriteContent(Path.Combine(GITLITE_DIR.ToString(), "HEAD"), $"ref: {branchName}");
@@ -528,5 +522,21 @@ public class Repository
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// A helper method that removes all files in the CWD that are not in the given
+    /// FILE MAPPING.
+    /// </summary>
+    /// <param name="fileMapping">File mapping of files to not be removed in the CWD.</param>
+    private static void RemoveFilesNotInFileMappingInCwd(Dictionary<string, string> fileMapping)
+    {
+        foreach (var file in Directory.GetFiles(CWD.ToString()).Select(Path.GetFileName))
+        {
+            if (!fileMapping.ContainsKey(file) && file != "Gitlite")
+            {
+                File.Delete(file);
+            }
+        }
     }
 }
