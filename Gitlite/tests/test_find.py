@@ -1,3 +1,5 @@
+import os.path
+
 import utils
 import subprocess
 
@@ -19,7 +21,7 @@ def test_find(setup_and_cleanup):
         utils.run_gitlite_cmd(["commit", i])
         
         # store the new commit's hash
-        with open(".gitlite/HEAD", "r") as file:
+        with open(os.path.join(".gitlite", "branches", "master"), "r") as file:
             hashes.append(file.read().strip())
 
     # Should print: "Found no commit with that message.", when no commit with matching message is found
