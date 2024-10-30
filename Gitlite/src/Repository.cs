@@ -414,16 +414,16 @@ public class Repository
     /// </summary>
     /// <param name="commitId">Commit id of the commit to checkout from.</param>
     /// <param name="filename">Name of the file.</param>
-    private static void CheckoutWithFileAndCommit(string filename, string commitId = "")
+    private static void CheckoutWithFileAndCommit(string filename, string? commitId = null)
     {
         Commit commit;
-        if (commitId == "")
+        if (commitId == null)
         {
             commit = Gitlite.Commit.GetHeadCommit();    
         }
         else
         {
-            commit = Gitlite.Commit.Deserialize(commitId, completeForm:false, "No commit with that id exists.");
+            commit = Gitlite.Commit.Deserialize(commitId, "No commit with that id exists.");
         }
         
         if (!commit.FileMapping.ContainsKey(filename))
@@ -448,29 +448,33 @@ public class Repository
             Utils.ExitWithError("No need to checkout the current branch.");
         }
         
+        // latest commit in the branch to checkout
+        Commit branchToCheckout = Gitlite.Commit.Deserialize(Utils.ReadContentsAsString(branchPath));
+        CheckoutAllFilesWithCommit(branchToCheckout, branchName);
+    }
+
+    public static void CheckoutAllFilesWithCommit(Commit commit, string newHead)
+    {
         StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
         Commit headCommit = Gitlite.Commit.GetHeadCommit();
         
-        // latest commit in the branch to checkout
-        Commit branchToCheckout = Gitlite.Commit.Deserialize(Utils.ReadContentsAsString(branchPath));
-
         if (IsThereUntrackedFile(stagingArea, headCommit))
         {
             Utils.ExitWithError("There is an untracked file in the way; delete it, or add and commit it first.");
         }
         
         // Writing files from the checked-out branch commit to the working directory 
-        foreach (var file in branchToCheckout.FileMapping)
+        foreach (var file in commit.FileMapping)
         {
             string content = Blob.ReadBlobContentAsString(file.Value);
             Utils.WriteContent(Path.Combine(CWD.ToString(), file.Key), content);
         }
         
         // Removing files not present in the checked-out branch commit
-        RemoveFilesNotInFileMappingInCwd(branchToCheckout.FileMapping);
+        RemoveFilesNotInFileMappingInCwd(commit.FileMapping);
         
         // Update HEAD pointer and clear the staging area
-        Utils.WriteContent(Path.Combine(GITLITE_DIR.ToString(), "HEAD"), $"ref: {branchName}");
+        Utils.WriteContent(Path.Combine(GITLITE_DIR.ToString(), "HEAD"), $"ref: {newHead}");
         stagingArea.Clear();
     }
 

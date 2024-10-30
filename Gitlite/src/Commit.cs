@@ -83,11 +83,11 @@ public class Commit
         return CreateCommit("initial commit", unixEpoch, null);
     }
 
-    public static Commit Deserialize(string hash, bool completeForm = true, string? errorMessage = null)
+    public static Commit Deserialize(string hash, string? errorMessage = null)
     {
         string path;
-
-        if (!completeForm)
+        
+        if (hash.Length < 40)
         {
             hash = FindCompleteHash(hash);
             if (hash == null)
