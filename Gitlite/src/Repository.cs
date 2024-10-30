@@ -399,7 +399,16 @@ public class Repository
         File.Delete(path);
     }
     
-
+    public static void Reset(string commitId)
+    {
+        Commit commit = Gitlite.Commit.Deserialize(commitId, "No commit with that id exists.");
+        CheckoutAllFilesWithCommit(commit);
+        
+        // Update branch pointer
+        string branch = Gitlite.Branch.GetActiveBranch() ?? throw new InvalidOperationException("Current active branch is null.");
+        Utils.WriteContent(Path.Combine(BRANCHES.ToString(), branch), commitId);
+    }
+    
     private static void ValidateCheckoutSeparator(string[] args, int index)
     {
         if (args[index] != "--")
@@ -450,10 +459,13 @@ public class Repository
         
         // latest commit in the branch to checkout
         Commit branchToCheckout = Gitlite.Commit.Deserialize(Utils.ReadContentsAsString(branchPath));
-        CheckoutAllFilesWithCommit(branchToCheckout, branchName);
+        CheckoutAllFilesWithCommit(branchToCheckout);
+        
+        // Update HEAD
+        Utils.WriteContent(Path.Combine(GITLITE_DIR.ToString(), "HEAD"), $"ref: {branchName}");
     }
 
-    public static void CheckoutAllFilesWithCommit(Commit commit, string newHead)
+    private static void CheckoutAllFilesWithCommit(Commit commit)
     {
         StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
         Commit headCommit = Gitlite.Commit.GetHeadCommit();
@@ -473,8 +485,7 @@ public class Repository
         // Removing files not present in the checked-out branch commit
         RemoveFilesNotInFileMappingInCwd(commit.FileMapping);
         
-        // Update HEAD pointer and clear the staging area
-        Utils.WriteContent(Path.Combine(GITLITE_DIR.ToString(), "HEAD"), $"ref: {newHead}");
+        // Clear the staging area
         stagingArea.Clear();
     }
 

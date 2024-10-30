@@ -82,6 +82,11 @@ public static class Program
                 Utils.ValidateArguments("rm-branch", args, 2);
                 Repository.RmBranch(args[1]);
                 break;
+            
+            case "reset":
+                Utils.ValidateArguments("reset", args, 2);
+                Repository.Reset(args[1]);
+                break;
                 
             default:
                 Utils.ExitWithError($"No command with such name exists: {args[0]}");
