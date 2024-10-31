@@ -4,7 +4,6 @@ namespace Gitlite;
  * TODO: Update the design document brought by the changes of file structure refactoring.
  * TODO: Refactor overloaded methods in Commit.
  *
- * TODO: Implement reset
  */
 
 /// <summary>
@@ -364,60 +363,8 @@ public class Repository
             Utils.ExitWithError("Invalid number of arguments for checkout.");
         }
     }
-
-    /// <summary>
-    /// Creates a Gitlite branch with the given name.
-    /// </summary>
-    /// <param name="branchName">Name of the branch to be created.</param>
-    public static void Branch(string branchName)
-    {
-        if (File.Exists(Path.Combine(BRANCHES.ToString(), branchName)))
-        {
-            Utils.ExitWithError("A branch with that name already exists.");
-        }
-        
-        Gitlite.Branch.CreateBranch(branchName, Gitlite.Commit.GetHeadCommitId());
-    }
-
-    /// <summary>
-    /// Deletes a branch given its name. A branch really is just a pointer to a commit node
-    /// and deleting a branch will just remove this pointer. It does not delete all the commits
-    /// created while in or under the branch.
-    /// </summary>
-    /// <param name="branchName">Name of the branch to delete.</param>
-    public static void RmBranch(string branchName)
-    {
-        string path = Path.Combine(BRANCHES.ToString(), branchName);
-        if (!File.Exists(path))
-        {
-            Utils.ExitWithError("A branch with that name does not exist.");
-        } else if (Gitlite.Branch.IsCurrentBranch(branchName))
-        {
-            Utils.ExitWithError("Cannot remove the current branch.");
-        }
-        
-        File.Delete(path);
-    }
     
-    public static void Reset(string commitId)
-    {
-        Commit commit = Gitlite.Commit.Deserialize(commitId, "No commit with that id exists.");
-        CheckoutAllFilesWithCommit(commit);
-        
-        // Update branch pointer
-        string branch = Gitlite.Branch.GetActiveBranch() ?? throw new InvalidOperationException("Current active branch is null.");
-        Utils.WriteContent(Path.Combine(BRANCHES.ToString(), branch), commitId);
-    }
-    
-    private static void ValidateCheckoutSeparator(string[] args, int index)
-    {
-        if (args[index] != "--")
-        {
-            Utils.ExitWithError("Invalid arguments specified.");
-        }
-    }
-
-    /// <summary>
+        /// <summary>
     /// Takes the version of the file in the head commit and puts it in the working directory,
     /// overwriting the file there if it exists. Does not stage the new file.
     /// </summary>
@@ -470,7 +417,7 @@ public class Repository
         StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
         Commit headCommit = Gitlite.Commit.GetHeadCommit();
         
-        if (IsThereUntrackedFile(stagingArea, headCommit))
+        if (HasUntrackedFile(stagingArea, headCommit))
         {
             Utils.ExitWithError("There is an untracked file in the way; delete it, or add and commit it first.");
         }
@@ -489,6 +436,59 @@ public class Repository
         stagingArea.Clear();
     }
 
+    /// <summary>
+    /// Creates a Gitlite branch with the given name.
+    /// </summary>
+    /// <param name="branchName">Name of the branch to be created.</param>
+    public static void Branch(string branchName)
+    {
+        if (File.Exists(Path.Combine(BRANCHES.ToString(), branchName)))
+        {
+            Utils.ExitWithError("A branch with that name already exists.");
+        }
+        
+        Gitlite.Branch.CreateBranch(branchName, Gitlite.Commit.GetHeadCommitId());
+    }
+
+    /// <summary>
+    /// Deletes a branch given its name. A branch really is just a pointer to a commit node
+    /// and deleting a branch will just remove this pointer. It does not delete all the commits
+    /// created while in or under the branch.
+    /// </summary>
+    /// <param name="branchName">Name of the branch to delete.</param>
+    public static void RmBranch(string branchName)
+    {
+        string path = Path.Combine(BRANCHES.ToString(), branchName);
+        if (!File.Exists(path))
+        {
+            Utils.ExitWithError("A branch with that name does not exist.");
+        } else if (Gitlite.Branch.IsCurrentBranch(branchName))
+        {
+            Utils.ExitWithError("Cannot remove the current branch.");
+        }
+        
+        File.Delete(path);
+    }
+    
+    public static void Reset(string commitId)
+    {
+        string completeCommitId = Gitlite.Commit.FindCompleteHash(commitId);
+        Commit commit = Gitlite.Commit.Deserialize(completeCommitId, "No commit with that id exists.");
+        CheckoutAllFilesWithCommit(commit);
+        
+        // Update branch pointer
+        string branch = Gitlite.Branch.GetActiveBranch() ?? throw new InvalidOperationException("Not in a branch.");
+        Utils.WriteContent(Path.Combine(BRANCHES.ToString(), branch), completeCommitId);
+    }
+    
+    private static void ValidateCheckoutSeparator(string[] args, int index)
+    {
+        if (args[index] != "--")
+        {
+            Utils.ExitWithError("Invalid arguments specified.");
+        }
+    }
+    
     /// <summary>
     /// Creates the directory structures inside the .gitlite directory
     /// </summary>
@@ -516,7 +516,7 @@ public class Repository
     /// <param name="stagingArea">Staging area object.</param>
     /// <param name="head">HEAD commit object.</param>
     /// <returns>True if there is an untracked file/s and false otherwise.</returns>
-    private static bool IsThereUntrackedFile(StagingArea? stagingArea = null, Commit? head = null)
+    private static bool HasUntrackedFile(StagingArea? stagingArea = null, Commit? head = null)
     {
         if (stagingArea == null)
         {

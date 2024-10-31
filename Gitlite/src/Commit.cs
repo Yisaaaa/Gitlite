@@ -85,6 +85,11 @@ public class Commit
 
     public static Commit Deserialize(string hash, string? errorMessage = null)
     {
+        if (string.IsNullOrEmpty(hash))
+        {
+            throw new ArgumentNullException(nameof(hash), "Hash cannot be null or empty when deserializing.");
+        }
+        
         string path;
         
         if (hash.Length < 40)
@@ -105,11 +110,14 @@ public class Commit
         return MessagePackSerializer.Deserialize<Commit>(commitAsByte);
     }
 
-    private static string? FindCompleteHash(string shortHash)
+    public static string? FindCompleteHash(string shortHash)
     {
         if (shortHash.Length < 5)
         {
             Utils.ExitWithError("Short hash must at least be 5 characters long.");
+        } else if (shortHash.Length == 40)
+        {
+            return shortHash;
         }
         
         var (firstTwoDigits, rest) = Utils.SplitHashPath(shortHash);
