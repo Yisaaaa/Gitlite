@@ -111,7 +111,7 @@ public partial class StagingArea
         }
     }
 
-    public bool IsThereStagedFiles()
+    public bool HasStagedFiles()
     {
         return StagingForAddition.Count != 0 || StagingForRemoval.Count != 0;
     }

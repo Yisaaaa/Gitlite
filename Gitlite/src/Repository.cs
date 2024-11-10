@@ -87,7 +87,7 @@ public class Repository
         StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
 
         // Check for failure cases
-        if (!stagingArea.IsThereStagedFiles())
+        if (!stagingArea.HasStagedFiles())
         {
             Utils.ExitWithError("No changes added to the commit.");
         }
@@ -396,7 +396,7 @@ public class Repository
     private static void CheckoutWithBranch(string branchName)
     {
         string branchPath = Path.Combine(BRANCHES.ToString(), branchName);
-        if (!File.Exists(branchPath))
+        if (!Gitlite.Branch.Exists(branchPath))
         {
             Utils.ExitWithError("No such branch exists.");
         } else if (Gitlite.Branch.IsCurrentBranch(branchName))
@@ -459,7 +459,7 @@ public class Repository
     public static void RmBranch(string branchName)
     {
         string path = Path.Combine(BRANCHES.ToString(), branchName);
-        if (!File.Exists(path))
+        if (!Gitlite.Branch.Exists(path))
         {
             Utils.ExitWithError("A branch with that name does not exist.");
         } else if (Gitlite.Branch.IsCurrentBranch(branchName))

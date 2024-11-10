@@ -52,4 +52,14 @@ public static class Branch
 
         return null;
     }
+
+    public static bool Exists(string branchName)
+    {
+        if (branchName.StartsWith(Repository.BRANCHES.ToString()))
+        {
+            return File.Exists(branchName);
+        }
+        
+        return File.Exists(Path.Combine(Repository.BRANCHES.ToString(), branchName));
+    }
 }
