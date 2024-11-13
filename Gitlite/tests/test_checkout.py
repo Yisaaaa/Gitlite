@@ -128,6 +128,30 @@ def test_checkout_a_branch(setup_and_cleanup):
     utils.run_gitlite_cmd("checkout wug-society")
     assert utils.read_file("wug.txt") == "This is definitely a wug",\
         "wug.txt must have the contents of the wug.txt in the new branch"
+ 
+def test_branch_checkout_untracked_files(setup_and_cleanup):
+    """
+    Testing checking out a branch with an untracked file on the current branch. Should only
+    error when the untracked file would get overwritten by the checkout.
+    """
+    utils.create_file("wug.txt", "This is a wug.")
+    utils.add_and_commit(["wug.txt"], "wug commit")
+    utils.run_gitlite_cmd("branch non-wug-branch")
+    
+    # Checking out on a new branch and creating the file that would be untracked in the master
+    # branch.
+    utils.run_gitlite_cmd("checkout non-wug-branch")
+    utils.create_file("non-wug.txt", "not wug")
+    utils.add_and_commit(["non-wug.txt"], "not wug commit")
+    
+    utils.run_gitlite_cmd("checkout master")
+    utils.create_file("non-wug.txt", "content is: non-wug on master branch")
+    
+    # Since the non-wug.txt exists in the non-wug-branch. Checking out that branch would overwrite
+    # the untracked non-wug.txt in the master branch. 
+    stdout, return_code = utils.run_gitlite_cmd("checkout non-wug-branch")
+    assert "There is an untracked file in the way; delete it, or add and commit it first." in stdout
+    assert return_code != 0
     
 def get_commit_ids_from_log():
     """
