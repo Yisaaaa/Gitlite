@@ -3,6 +3,7 @@ namespace Gitlite;
 /*
  * TODO: Update the design document brought by the changes of file structure refactoring.
  * TODO: Refactor overloaded methods in Commit.
+ * TODO: Refactors things on lingq and conditions with ternary if possible.
  *
  */
 
@@ -416,8 +417,15 @@ public class Repository
     {
         StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
         Commit headCommit = Gitlite.Commit.GetHeadCommit();
+
+        List<string> untrackedFiles = GetUntrackedFiles(stagingArea, headCommit);
+
+        foreach (var file in untrackedFiles)
+        {
+            Console.WriteLine(file);
+        }
         
-        if (HasUntrackedFile(stagingArea, headCommit))
+        if (untrackedFiles.Count != 0 && FileExistsInFileMapping(commit.FileMapping, untrackedFiles))
         {
             Utils.ExitWithError("There is an untracked file in the way; delete it, or add and commit it first.");
         }
@@ -430,7 +438,7 @@ public class Repository
         }
         
         // Removing files not present in the checked-out branch commit
-        RemoveFilesNotInFileMappingInCwd(commit.FileMapping);
+        RemoveFilesNotInFileMappingInCwd(commit.FileMapping, untrackedFiles);
         
         // Clear the staging area
         stagingArea.Clear();
@@ -511,12 +519,12 @@ public class Repository
     }
 
     /// <summary>
-    /// Checks if there is an untracked file/s in the working directory.
+    /// Gets the untracked files in the working directory.
     /// </summary>
     /// <param name="stagingArea">Staging area object.</param>
     /// <param name="head">HEAD commit object.</param>
-    /// <returns>True if there is an untracked file/s and false otherwise.</returns>
-    private static bool HasUntrackedFile(StagingArea? stagingArea = null, Commit? head = null)
+    /// <returns>A list of untracked files if there's any. Returns null otherwise</returns>
+    private static List<string> GetUntrackedFiles(StagingArea? stagingArea = null, Commit? head = null)
     {
         if (stagingArea == null)
         {
@@ -527,16 +535,18 @@ public class Repository
         {
             head = Gitlite.Commit.GetHeadCommit();
         }
+
+        List<string> files = new List<string>();
         
         foreach (var file in Directory.GetFiles(CWD.ToString()).Select(Path.GetFileName))
         {   // An untracked file exists in the current branch.
-            if (!stagingArea.GetStagingForAddition().ContainsKey(file) && !head.FileMapping.ContainsKey(file) && file != "Gitlite")
+            if (!stagingArea.GetStagingForAddition().ContainsKey(file) && !head.FileMapping.ContainsKey(file))
             {
-                return true;
+                files.Add(Path.GetFileName(file));
             }
         }
 
-        return false;
+        return files;
     }
 
     /// <summary>
@@ -544,14 +554,27 @@ public class Repository
     /// FILE MAPPING.
     /// </summary>
     /// <param name="fileMapping">File mapping of files to not be removed in the CWD.</param>
-    private static void RemoveFilesNotInFileMappingInCwd(Dictionary<string, string> fileMapping)
+    private static void RemoveFilesNotInFileMappingInCwd(Dictionary<string, string> fileMapping, List<string> excludedFiles)
     {
+        excludedFiles.Add("Gitlite");
         foreach (var file in Directory.GetFiles(CWD.ToString()).Select(Path.GetFileName))
         {
-            if (!fileMapping.ContainsKey(file) && file != "Gitlite")
+            if (!fileMapping.ContainsKey(file) && !excludedFiles.Contains(file))
             {
                 File.Delete(file);
             }
         }
     }
+
+    /// <summary>
+    /// Given a list of files and a dictionary of file mapping, checks if a file from files
+    /// exists in the file mapping.
+    /// </summary>
+    /// <param name="fileMapping"></param>
+    /// <param name="files"></param>
+    /// <returns>True if a file from files is in file mapping</returns>
+    private static bool FileExistsInFileMapping(Dictionary<string, string> fileMapping,
+        List<string> files) => files.Any(fileMapping.ContainsKey);
+    
+    
 }

@@ -86,12 +86,6 @@ def test_checkout_a_branch(setup_and_cleanup):
     assert os.path.exists(os.path.join(".gitlite", "branches", "cool-beans"))
 
     utils.create_file("wug.txt", "This is a wug.")
-
-    # Checking out with an untracked file in the current branch
-    stdout, stderr, return_code = utils.run_gitlite_cmd("checkout cool-beans", stderr=True)
-    assert "There is an untracked file in the way; delete it, or add and commit it first." in stdout
-    assert return_code != 0
-
     utils.add_and_commit(["wug.txt"], "Is it a wug?")
 
     # Creating a branch
