@@ -388,8 +388,6 @@ public class Repository
             Utils.ExitWithError("File does not exist in that commit.");
         }
         
-        Console.WriteLine(commit.Hash);
-        
         string fileContentInHeadCommit = Blob.ReadBlobContentAsString(commit.FileMapping[filename]);
         Utils.WriteContent(filename, fileContentInHeadCommit);
     }
@@ -407,29 +405,22 @@ public class Repository
         
         // latest commit in the branch to checkout
         Commit branchToCheckout = Gitlite.Commit.Deserialize(Utils.ReadContentsAsString(branchPath));
-        CheckoutAllFilesWithCommit(branchToCheckout);
+        Commit currentHeadCommit = Gitlite.Commit.GetHeadCommit();
+        StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
+        List<string> untrackedFiles = GetUntrackedFiles(stagingArea, currentHeadCommit);
+        
+        // Checking if there is an untracked that would get overwritten as a result of checkout
+        CheckUntrackedOverwrite(branchToCheckout.FileMapping, untrackedFiles);
+        
+        // Checkout all files from the head of the given branch
+        CheckoutAllFilesWithCommit(branchToCheckout, untrackedFiles, stagingArea);
         
         // Update HEAD
         Utils.WriteContent(Path.Combine(GITLITE_DIR.ToString(), "HEAD"), $"ref: {branchName}");
     }
 
-    private static void CheckoutAllFilesWithCommit(Commit commit)
+    private static void CheckoutAllFilesWithCommit(Commit commit, List<string> excludedFiles, StagingArea stagingArea)
     {
-        StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
-        Commit headCommit = Gitlite.Commit.GetHeadCommit();
-
-        List<string> untrackedFiles = GetUntrackedFiles(stagingArea, headCommit);
-
-        foreach (var file in untrackedFiles)
-        {
-            Console.WriteLine(file);
-        }
-        
-        if (untrackedFiles.Count != 0 && FileExistsInFileMapping(commit.FileMapping, untrackedFiles))
-        {
-            Utils.ExitWithError("There is an untracked file in the way; delete it, or add and commit it first.");
-        }
-        
         // Writing files from the checked-out branch commit to the working directory 
         foreach (var file in commit.FileMapping)
         {
@@ -438,7 +429,7 @@ public class Repository
         }
         
         // Removing files not present in the checked-out branch commit
-        RemoveFilesNotInFileMappingInCwd(commit.FileMapping, untrackedFiles);
+        RemoveFilesNotInFileMappingInCwd(commit.FileMapping, excludedFiles);
         
         // Clear the staging area
         stagingArea.Clear();
@@ -482,7 +473,15 @@ public class Repository
     {
         string completeCommitId = Gitlite.Commit.FindCompleteHash(commitId);
         Commit commit = Gitlite.Commit.Deserialize(completeCommitId, "No commit with that id exists.");
-        CheckoutAllFilesWithCommit(commit);
+        StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
+        Commit currentHeadCommit = Gitlite.Commit.GetHeadCommit();
+        List<string> untrackedFiles = GetUntrackedFiles(stagingArea, currentHeadCommit);   
+        
+        // Check if there's an untracked overwrite conflict error
+        CheckUntrackedOverwrite(commit.FileMapping, untrackedFiles);
+        
+        // Checkout all files if there are no untracked files overwrite conflict.
+        CheckoutAllFilesWithCommit(commit, untrackedFiles, stagingArea);
         
         // Update branch pointer
         string branch = Gitlite.Branch.GetActiveBranch() ?? throw new InvalidOperationException("Not in a branch.");
@@ -575,6 +574,30 @@ public class Repository
     /// <returns>True if a file from files is in file mapping</returns>
     private static bool FileExistsInFileMapping(Dictionary<string, string> fileMapping,
         List<string> files) => files.Any(fileMapping.ContainsKey);
-    
-    
+
+
+    // /// <summary>
+    // /// Validates if there's going to be an untracked file conflict. This means
+    // /// an untracked file would get overwritten because of some operation
+    // /// (e.g. checkout or merge).
+    // /// </summary>
+    // /// <param name="headCommit">HEAD commit of the current branch.</param>
+    // /// <param name="stagingArea">Staging area of the gitlite repository.</param>
+    // private static void CheckOverwriteConflict(Commit headCommit, StagingArea stagingArea)
+    // {
+    //     List<string> untrackedFiles = GetUntrackedFiles(stagingArea, headCommit);
+    //     
+    //     if (untrackedFiles.Count > 0 && FileExistsInFileMapping(headCommit.FileMapping, untrackedFiles))
+    //     {
+    //         Utils.ExitWithError("There is an untracked file in the way; delete it, or add and commit it first.");
+    //     }
+    // }
+
+    private static void CheckUntrackedOverwrite(Dictionary<string, string> fileMapping, List<string> untrackedFiles)
+    {
+        if (untrackedFiles.Count > 0 && FileExistsInFileMapping(fileMapping, untrackedFiles))
+        {
+            Utils.ExitWithError("There is an untracked file in the way; delete it, or add and commit it first.");
+        } 
+    }
 }
