@@ -488,6 +488,27 @@ public class Repository
         Utils.WriteContent(Path.Combine(BRANCHES.ToString(), branch), completeCommitId);
     }
     
+    public static void Merge(string branchName)
+    {
+        StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
+        
+        if (stagingArea.HasStagedFiles())
+        {
+            Utils.ExitWithError("You have uncommitted changes.");
+        } else if (!Gitlite.Branch.Exists(branchName))
+        {
+            Utils.ExitWithError("A branch with that name does not exist.");
+        } else if (Gitlite.Branch.IsCurrentBranch(branchName))
+        {
+            Utils.ExitWithError("Cannot merge a branch with itself.");
+        }
+        
+        List<string> untrackedFiles = GetUntrackedFiles(stagingArea);
+        Commit currBranchHead = Gitlite.Commit.GetHeadCommit();
+        
+        
+    }
+    
     private static void ValidateCheckoutSeparator(string[] args, int index)
     {
         if (args[index] != "--")
