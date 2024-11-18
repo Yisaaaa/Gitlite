@@ -626,4 +626,62 @@ public class Repository
             Utils.ExitWithError("There is an untracked file in the way; delete it, or add and commit it first.");
         } 
     }
+
+    private static void CheckMergeUntrackedConflict(Commit givenBranchHead, Commit splitPoint)
+    {
+        StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
+        Commit currentHeadCommit = Gitlite.Commit.GetHeadCommit();
+
+        foreach (string file in GetUntrackedFiles(stagingArea, currentHeadCommit))
+        {
+            if ()
+        }
+    }
+    
+    /// <summary>
+    /// Given two branches, finds the split point in the commit tree.
+    /// THe split point of the two branches is their latest common ancestor in
+    /// the commit tree.
+    /// </summary>
+    /// <param name="currentBranch">Current branch head.</param>
+    /// <param name="givenBranch">Given branch head.</param>
+    /// <returns></returns>
+    private static Commit FindSplitPoint(Commit currentBranch, Commit givenBranch) 
+    {
+        // Store all the commits of one of the branches in a hashset.
+        // Doesn't matter which. Here I am choosing the given branch.
+        // Since we are mainly concerned in lookups, hashset is better
+        // than a list.
+        
+        
+        HashSet<Commit> givenBranchCommits = new HashSet<Commit>();
+        Commit pointer = givenBranch;
+        while (pointer.ParentHashRef != null)
+        {
+            givenBranchCommits.Add(pointer);
+            pointer = Gitlite.Commit.Deserialize(pointer.ParentHashRef);
+        }
+        // This is the initial commit. Remember, the initial commit is always
+        // created when we initialize a gitlite repo.
+        givenBranchCommits.Add(pointer);
+        
+        // Now we can traverse the other branch from the latest commit backwards
+        // and see if there exists a (latest) common ancestor.
+        Commit splitPoint;
+        pointer = currentBranch;
+        while (pointer.ParentHashRef != null)
+        {
+            if (givenBranchCommits.Contains(pointer))
+            {
+                splitPoint = pointer;
+            }
+        }
+        // Otherwise, we reach the initial commit here. Since we know for a fact
+        // that all commits share the initial commit. If we did not find
+        // any common ancestor before that, it means the common ancestor is the initial
+        // commit.
+        splitPoint = pointer;
+
+        return splitPoint;
+    }
 }
