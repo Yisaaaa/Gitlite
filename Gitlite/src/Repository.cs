@@ -539,13 +539,18 @@ public class Repository
         
         foreach (var file in Directory.GetFiles(CWD.ToString()).Select(Path.GetFileName))
         {   // An untracked file exists in the current branch.
-            if (!stagingArea.GetStagingForAddition().ContainsKey(file) && !head.FileMapping.ContainsKey(file))
+            if (IsFileUntracked(file, stagingArea, head))
             {
-                files.Add(Path.GetFileName(file));
+                files.Add(file);
             }
         }
 
         return files;
+    }
+
+    private static bool IsFileUntracked(string file, StagingArea stagingArea, Commit currHeadCommit)
+    {
+        return !stagingArea.GetStagingForAddition().ContainsKey(file) && !currHeadCommit.FileMapping.ContainsKey(file);
     }
 
     /// <summary>
