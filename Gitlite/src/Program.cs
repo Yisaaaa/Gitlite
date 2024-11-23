@@ -87,6 +87,11 @@ public static class Program
                 Utils.ValidateArguments("reset", args, 2);
                 Repository.Reset(args[1]);
                 break;
+            
+            case "merge":
+                Utils.ValidateArguments("merge", args, 2);
+                Repository.Merge(args[1]);
+                break;
                 
             default:
                 Utils.ExitWithError($"No command with such name exists: {args[0]}");

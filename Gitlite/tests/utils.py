@@ -95,6 +95,17 @@ def add_and_commit(files_to_add: list, commit_msg: str) -> None:
     if return_code != 0:
         print("commit part")
         print(stdout, stderr, return_code)
+        
+def create_add_commit(filename: str, content: str, commit_msg: str) -> None:
+    """
+    Helper function for creating a file, adding it, and then committing it.
+    :param filename: 
+    :param content: 
+    :param commit_msg: 
+    :return: None 
+    """
+    create_file(filename, content)
+    add_and_commit([filename], commit_msg)
     
 def read_file(filepath: str) -> str:
     """

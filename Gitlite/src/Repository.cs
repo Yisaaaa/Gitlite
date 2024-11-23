@@ -652,36 +652,34 @@ public class Repository
         // Doesn't matter which. Here I am choosing the given branch.
         // Since we are mainly concerned in lookups, hashset is better
         // than a list.
-        
-        
-        HashSet<Commit> givenBranchCommits = new HashSet<Commit>();
+        HashSet<string> givenBranchCommits = new HashSet<string>();
         Commit pointer = givenBranch;
         while (pointer.ParentHashRef != null)
         {
-            givenBranchCommits.Add(pointer);
+            givenBranchCommits.Add(pointer.Hash);
             pointer = Gitlite.Commit.Deserialize(pointer.ParentHashRef);
         }
         // This is the initial commit. Remember, the initial commit is always
-        // created when we initialize a gitlite repo.
-        givenBranchCommits.Add(pointer);
+        // created when we initialize a gitlite repo. (I think this is not
+        // necessary. We'll just return it anyway once we reached the end of the
+        // other branch's commit history)
+        givenBranchCommits.Add(pointer.Hash);
         
         // Now we can traverse the other branch from the latest commit backwards
         // and see if there exists a (latest) common ancestor.
-        Commit splitPoint;
         pointer = currentBranch;
         while (pointer.ParentHashRef != null)
         {
-            if (givenBranchCommits.Contains(pointer))
+            if (givenBranchCommits.Contains(pointer.Hash))
             {
-                splitPoint = pointer;
+                return pointer;
             }
+            pointer = Gitlite.Commit.Deserialize(pointer.ParentHashRef);
         }
         // Otherwise, we reach the initial commit here. Since we know for a fact
         // that all commits share the initial commit. If we did not find
         // any common ancestor before that, it means the common ancestor is the initial
         // commit.
-        splitPoint = pointer;
-
-        return splitPoint;
+        return pointer;
     }
 }

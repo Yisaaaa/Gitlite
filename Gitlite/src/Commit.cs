@@ -156,6 +156,12 @@ public class Commit
         return commit;
     }
 
+    public static Commit GetBranchHeadCommit(string branchName)
+    {
+        string hashRef = Utils.ReadContentsAsString(Path.Combine(Repository.BRANCHES.ToString(), branchName));
+        return Deserialize(hashRef);
+    }
+
     /// <summary>
     /// Retrieves the commit ID referenced by the HEAD pointer.
     /// </summary>
