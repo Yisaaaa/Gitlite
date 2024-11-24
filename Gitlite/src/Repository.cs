@@ -12,6 +12,7 @@ namespace Gitlite;
 /// </summary>
 public class Repository
 {
+    private static string GITLITE = "Gitlite";
     
     // TODO: Might refactor and convert these into just strings
     public static DirectoryInfo CWD = Directory.GetParent(AppContext.BaseDirectory);
@@ -410,7 +411,10 @@ public class Repository
         List<string> untrackedFiles = GetUntrackedFiles(stagingArea, currentHeadCommit);
         
         // Checking if there is an untracked that would get overwritten as a result of checkout
-        CheckUntrackedOverwrite(branchToCheckout.FileMapping, untrackedFiles);
+        if (HasUntrackedConflict(branchToCheckout.FileMapping, untrackedFiles))
+        {
+            Utils.ExitWithError("There is an untracked file in the way; delete it, or add and commit it first.");
+        }
         
         // Checkout all files from the head of the given branch
         CheckoutAllFilesWithCommit(branchToCheckout, untrackedFiles, stagingArea);
@@ -478,7 +482,10 @@ public class Repository
         List<string> untrackedFiles = GetUntrackedFiles(stagingArea, currentHeadCommit);   
         
         // Check if there's an untracked overwrite conflict error
-        CheckUntrackedOverwrite(commit.FileMapping, untrackedFiles);
+        if (HasUntrackedConflict(commit.FileMapping, untrackedFiles))
+        {
+            Utils.ExitWithError("There is an untracked file in the way; delete it, or add and commit it first.");
+        }
         
         // Checkout all files if there are no untracked files overwrite conflict.
         CheckoutAllFilesWithCommit(commit, untrackedFiles, stagingArea);
@@ -497,16 +504,29 @@ public class Repository
             Utils.ExitWithError("You have uncommitted changes.");
         } else if (!Gitlite.Branch.Exists(branchName))
         {
-            Utils.ExitWithError("A branch with that name does not exist.");
+            Utils.ExitWithError("A branch with thatname does not exist.");
         } else if (Gitlite.Branch.IsCurrentBranch(branchName))
         {
             Utils.ExitWithError("Cannot merge a branch with itself.");
+        } 
+        
+        Commit currBranchHead = Gitlite.Commit.GetHeadCommit();
+        Commit givenBranchHead = Gitlite.Commit.GetBranchHeadCommit(branchName);
+        Commit splitPoint = FindSplitPoint(currBranchHead, givenBranchHead);
+        
+        // Checking if on of the branch heads is the split point
+        if (givenBranchHead.Hash == splitPoint.Hash)
+        {
+            Console.WriteLine("Given branch is an ancestor of the current branch.");
+            return;
         }
         
-        List<string> untrackedFiles = GetUntrackedFiles(stagingArea);
-        Commit currBranchHead = Gitlite.Commit.GetHeadCommit();
-        
-        
+        // Check first if an untracked file would get deleted or overwritten
+        if (HasMergeUntrackedConflict(givenBranchHead, splitPoint))
+        {
+            Utils.ExitWithError("");
+        }
+
     }
     
     private static void ValidateCheckoutSeparator(string[] args, int index)
@@ -560,7 +580,7 @@ public class Repository
         
         foreach (var file in Directory.GetFiles(CWD.ToString()).Select(Path.GetFileName))
         {   // An untracked file exists in the current branch.
-            if (IsFileUntracked(file, stagingArea, head))
+            if (file != GITLITE && IsFileUntracked(file, stagingArea, head))
             {
                 files.Add(file);
             }
@@ -581,7 +601,6 @@ public class Repository
     /// <param name="fileMapping">File mapping of files to not be removed in the CWD.</param>
     private static void RemoveFilesNotInFileMappingInCwd(Dictionary<string, string> fileMapping, List<string> excludedFiles)
     {
-        excludedFiles.Add("Gitlite");
         foreach (var file in Directory.GetFiles(CWD.ToString()).Select(Path.GetFileName))
         {
             if (!fileMapping.ContainsKey(file) && !excludedFiles.Contains(file))
@@ -619,23 +638,39 @@ public class Repository
     //     }
     // }
 
-    private static void CheckUntrackedOverwrite(Dictionary<string, string> fileMapping, List<string> untrackedFiles)
+    private static bool HasUntrackedConflict(Dictionary<string, string> fileMapping, List<string> untrackedFiles)
     {
         if (untrackedFiles.Count > 0 && FileExistsInFileMapping(fileMapping, untrackedFiles))
         {
-            Utils.ExitWithError("There is an untracked file in the way; delete it, or add and commit it first.");
-        } 
+            return true;
+        }
+
+        return false;
     }
 
-    private static void CheckMergeUntrackedConflict(Commit givenBranchHead, Commit splitPoint)
+    private static bool HasMergeUntrackedConflict(Commit givenBranchHead, Commit splitPoint)
     {
+        // A merge would cause a delete conflict with an untracked file if:
+        // - the file does is absent (untracked/unstaged) in both branches but exists in the split point
+        // - the file is present in the split point, absent in the current branch, and unmodified in the
+        //   given branch
+        
+        // And an overwrite conflict if:
+        // - the file exists in the given branch
+        
         StagingArea stagingArea = StagingArea.GetDeserializedStagingArea();
         Commit currentHeadCommit = Gitlite.Commit.GetHeadCommit();
 
         foreach (string file in GetUntrackedFiles(stagingArea, currentHeadCommit))
         {
-            if ()
+            if (
+                splitPoint.FileMapping.ContainsKey(file) || givenBranchHead.FileMapping.ContainsKey(file))
+            {
+                return true;
+            }
         }
+
+        return false;
     }
     
     /// <summary>
