@@ -20,7 +20,7 @@ manual_test: clean build
 	mkdir test_tmp_dir && \
 	cp Gitlite ./test_tmp_dir/
 	
-test: build
+test: build clean
 	source venv/bin/activate && pytest ${FILE} -s -v
 	
 clean:
