@@ -423,7 +423,7 @@ public class Repository
         Utils.WriteContent(Path.Combine(GITLITE_DIR.ToString(), "HEAD"), $"ref: {branchName}");
     }
 
-    private static void CheckoutAllFilesWithCommit(Commit commit, List<string> excludedFiles, StagingArea stagingArea)
+    private static void CheckoutAllFilesWithCommit(Commit commit, List<string> untrackedFiles, StagingArea stagingArea)
     {
         // Writing files from the checked-out branch commit to the working directory 
         foreach (var file in commit.FileMapping)
@@ -433,7 +433,7 @@ public class Repository
         }
         
         // Removing files not present in the checked-out branch commit
-        RemoveFilesNotInFileMappingInCwd(commit.FileMapping, excludedFiles);
+        RemoveFilesNotInFileMappingInCwd(commit.FileMapping, untrackedFiles);
         
         // Clear the staging area
         stagingArea.Clear();
@@ -524,8 +524,10 @@ public class Repository
         // Check first if an untracked file would get deleted or overwritten
         if (HasMergeUntrackedConflict(givenBranchHead, splitPoint))
         {
-            Utils.ExitWithError("");
+            Utils.ExitWithError("There is an untracked file in the way; delete it, or add and commit it first.");
         }
+        
+        
 
     }
     
@@ -599,11 +601,11 @@ public class Repository
     /// FILE MAPPING.
     /// </summary>
     /// <param name="fileMapping">File mapping of files to not be removed in the CWD.</param>
-    private static void RemoveFilesNotInFileMappingInCwd(Dictionary<string, string> fileMapping, List<string> excludedFiles)
+    private static void RemoveFilesNotInFileMappingInCwd(Dictionary<string, string> fileMapping, List<string> untrackedFiles)
     {
         foreach (var file in Directory.GetFiles(CWD.ToString()).Select(Path.GetFileName))
         {
-            if (!fileMapping.ContainsKey(file) && !excludedFiles.Contains(file))
+            if (!fileMapping.ContainsKey(file) && !untrackedFiles.Contains(file) && file != GITLITE)
             {
                 File.Delete(file);
             }
